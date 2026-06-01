@@ -34,8 +34,20 @@
                     </a>
                 </li>
 
+                     <li class="nav-item">
+                    <a href="{{ route('admin.categories.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+
+                        <i class="nav-icon fas fa-list"></i>
+
+                        <p>Categories</p>
+
+                    </a>
+                </li>
+
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{{ route('admin.menu-items.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.menu-items.*') ? 'active' : '' }}">
 
                         <i class="nav-icon fas fa-utensils"></i>
 
@@ -44,8 +56,11 @@
                     </a>
                 </li>
 
+            
+
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{{ route('admin.tables.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.tables.*') ? 'active' : '' }}">
 
                         <i class="nav-icon fas fa-chair"></i>
 
@@ -53,6 +68,7 @@
 
                     </a>
                 </li>
+               
 
             </ul>
 
