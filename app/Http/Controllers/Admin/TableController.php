@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\RestaurantTable;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Str;
 
 class TableController extends Controller
 {
@@ -29,18 +30,47 @@ class TableController extends Controller
         $validated = $request->validate([
             'table_number' => [
                 'required',
-                'unique:restaurant_tables,table_number'
+                'string',
+                'max:50',
+                'unique:restaurant_tables,table_number',
             ],
-            'capacity' => [
+
+            'type' => [
+                'required',
+                'in:public,private',
+            ],
+
+            'min_capacity' => [
                 'required',
                 'integer',
-                'min:1'
+                'min:1',
             ],
+
+            'max_capacity' => [
+                'required',
+                'integer',
+                'gte:min_capacity',
+            ],
+
+            'location' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
             'status' => [
                 'required',
-                'in:available,occupied,reserved'
+                'in:available,occupied,reserved',
+            ],
+
+            'notes' => [
+                'nullable',
+                'string',
             ],
         ]);
+
+        $validated['capacity'] = $validated['max_capacity'];
+        $validated['qr_token'] = Str::random(32);
 
         RestaurantTable::create($validated);
 
@@ -48,7 +78,6 @@ class TableController extends Controller
             ->route('admin.tables.index')
             ->with('success', 'Table created successfully');
     }
-
     public function edit(RestaurantTable $restaurantTable)
     {
         return view(
@@ -64,18 +93,46 @@ class TableController extends Controller
         $validated = $request->validate([
             'table_number' => [
                 'required',
+                'string',
+                'max:50',
                 'unique:restaurant_tables,table_number,' . $restaurantTable->getKey(),
             ],
-            'capacity' => [
+
+            'type' => [
+                'required',
+                'in:public,private',
+            ],
+
+            'min_capacity' => [
                 'required',
                 'integer',
-                'min:1'
+                'min:1',
             ],
+
+            'max_capacity' => [
+                'required',
+                'integer',
+                'gte:min_capacity',
+            ],
+
+            'location' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
             'status' => [
                 'required',
-                'in:available,occupied,reserved'
+                'in:available,occupied,reserved',
+            ],
+
+            'notes' => [
+                'nullable',
+                'string',
             ],
         ]);
+
+        $validated['capacity'] = $validated['max_capacity'];
 
         $restaurantTable->update($validated);
 
@@ -83,7 +140,6 @@ class TableController extends Controller
             ->route('admin.tables.index')
             ->with('success', 'Table updated successfully');
     }
-
     public function destroy(RestaurantTable $restaurantTable)
     {
         $restaurantTable->delete();

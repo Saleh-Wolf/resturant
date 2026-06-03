@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\TableController;
 use App\Http\Controllers\Waiter\OrderController;
 use App\Http\Controllers\Cashier\BillingController;
 use App\Http\Controllers\Kitchen\KitchenController;
+use App\Http\Controllers\PublicMenuController;
 use App\Http\Controllers\Admin\MenuItemController;
 Route::get('/', function () {
 
@@ -50,9 +51,36 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.index');
 
+            // Waiter Routes
+
 Route::get('/waiter/dashboard', [OrderController::class, 'index'])
     ->middleware(['auth', 'role:waiter'])
     ->name('waiter.dashboard');
+
+Route::get('/waiter/orders', [OrderController::class, 'index'])
+    ->middleware(['auth', 'role:waiter'])
+    ->name('waiter.orders.index');
+
+Route::get('/waiter/orders/create', [OrderController::class, 'create'])
+    ->middleware(['auth', 'role:waiter'])
+    ->name('waiter.orders.create');
+
+Route::post('/waiter/orders', [OrderController::class, 'store'])
+    ->middleware(['auth', 'role:waiter'])
+    ->name('waiter.orders.store');
+
+
+    Route::get('/waiter/orders/{order}', [OrderController::class, 'show'])
+    ->middleware(['auth', 'role:waiter'])
+    ->name('waiter.orders.show');
+
+
+
+
+
+
+
+
 
 Route::get('/cashier/dashboard', [BillingController::class, 'index'])
     ->middleware(['auth', 'role:cashier'])
@@ -169,5 +197,10 @@ Route::put('/admin/tables/{restaurantTable}', [TableController::class, 'update']
 Route::delete('/admin/tables/{restaurantTable}', [TableController::class, 'destroy'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.tables.destroy');
+
+       // Public Menu Route
+
+    Route::get('/scan/{token}', [PublicMenuController::class, 'index'])
+    ->name('scan.menu');
 
 require __DIR__.'/auth.php';
