@@ -1,79 +1,91 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
 
-    <a href="{{ route('admin.dashboard') }}" class="brand-link">
+    <a href="{{ route('dashboard') }}" class="brand-link">
         <span class="brand-text font-weight-light">
             Restaurant System
         </span>
     </a>
 
     <div class="sidebar">
-
         <nav class="mt-2">
-
             <ul class="nav nav-pills nav-sidebar flex-column">
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.dashboard') }}"
-                        class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                @if(Auth::user()->role === 'admin')
 
-                        <i class="nav-icon fas fa-home"></i>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.dashboard') }}"
+                           class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-home"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
 
-                        <p>Dashboard</p>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.users.index') }}"
+                           class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>Users</p>
+                        </a>
+                    </li>
 
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.categories.index') }}"
+                           class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-list"></i>
+                            <p>Categories</p>
+                        </a>
+                    </li>
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.users.index') }}"
-                        class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <li class="nav-item">
+                        <a href="{{ route('admin.menu-items.index') }}"
+                           class="nav-link {{ request()->routeIs('admin.menu-items.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-utensils"></i>
+                            <p>Menu</p>
+                        </a>
+                    </li>
 
-                        <i class="nav-icon fas fa-users"></i>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.tables.index') }}"
+                           class="nav-link {{ request()->routeIs('admin.tables.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-chair"></i>
+                            <p>Tables</p>
+                        </a>
+                    </li>
 
-                        <p>Users</p>
+                @elseif(Auth::user()->role === 'waiter')
 
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a href="{{ route('waiter.orders.index') }}"
+                           class="nav-link {{ request()->routeIs('waiter.orders.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-receipt"></i>
+                            <p>Orders</p>
+                        </a>
+                    </li>
 
-                     <li class="nav-item">
-                    <a href="{{ route('admin.categories.index') }}"
-                        class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+                @elseif(Auth::user()->role === 'kitchen_staff')
 
-                        <i class="nav-icon fas fa-list"></i>
+                    <li class="nav-item">
+                        <a href="{{ route('kitchen.orders.index') }}"
+                           class="nav-link {{ request()->routeIs('kitchen.orders.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-fire"></i>
+                            <p>Kitchen Orders</p>
+                        </a>
+                    </li>
 
-                        <p>Categories</p>
+                @elseif(Auth::user()->role === 'cashier')
 
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a href="{{ route('cashier.dashboard') }}"
+                           class="nav-link {{ request()->routeIs('cashier.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-cash-register"></i>
+                            <p>Cashier</p>
+                        </a>
+                    </li>
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.menu-items.index') }}"
-                        class="nav-link {{ request()->routeIs('admin.menu-items.*') ? 'active' : '' }}">
-
-                        <i class="nav-icon fas fa-utensils"></i>
-
-                        <p>Menu</p>
-
-                    </a>
-                </li>
-
-            
-
-                <li class="nav-item">
-                    <a href="{{ route('admin.tables.index') }}"
-                        class="nav-link {{ request()->routeIs('admin.tables.*') ? 'active' : '' }}">
-
-                        <i class="nav-icon fas fa-chair"></i>
-
-                        <p>Tables</p>
-
-                    </a>
-                </li>
-               
+                @endif
 
             </ul>
-
         </nav>
-
     </div>
 
 </aside>

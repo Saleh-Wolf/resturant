@@ -38,9 +38,7 @@
                     @forelse ($orders as $order)
                         <tr>
                             <td>#{{ $order->id }}</td>
-
                             <td>{{ $order->table->table_number }}</td>
-
                             <td>{{ $order->waiter->name }}</td>
 
                             <td>
@@ -50,7 +48,6 @@
                             </td>
 
                             <td>{{ number_format($order->total, 2) }} EGP</td>
-
                             <td>{{ $order->created_at->format('Y-m-d H:i') }}</td>
 
                             <td>

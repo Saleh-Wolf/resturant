@@ -12,6 +12,8 @@ use App\Http\Controllers\Cashier\BillingController;
 use App\Http\Controllers\Kitchen\KitchenController;
 use App\Http\Controllers\PublicMenuController;
 use App\Http\Controllers\Admin\MenuItemController;
+use App\Http\Controllers\Kitchen\OrderController as KitchenOrderController;
+
 Route::get('/', function () {
 
     if (! Auth::check()) {
@@ -42,17 +44,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-                // Admin Routes
+// Admin Routes
 Route::get('/admin/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.dashboard');
 
-    Route::get('/admin/users', [UserController::class, 'index'])
+Route::get('/admin/users', [UserController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.index');
 
-            // Waiter Routes
-
+// Waiter Routes
 Route::get('/waiter/dashboard', [OrderController::class, 'index'])
     ->middleware(['auth', 'role:waiter'])
     ->name('waiter.dashboard');
@@ -69,19 +70,24 @@ Route::post('/waiter/orders', [OrderController::class, 'store'])
     ->middleware(['auth', 'role:waiter'])
     ->name('waiter.orders.store');
 
-
-    Route::get('/waiter/orders/{order}', [OrderController::class, 'show'])
+Route::get('/waiter/orders/{order}', [OrderController::class, 'show'])
     ->middleware(['auth', 'role:waiter'])
     ->name('waiter.orders.show');
 
+// Kitchen Routes
+Route::get('/kitchen/orders', [KitchenOrderController::class, 'index'])
+    ->middleware(['auth', 'role:kitchen_staff'])
+    ->name('kitchen.orders.index');
 
+Route::patch('/kitchen/orders/{order}/preparing', [KitchenOrderController::class, 'startPreparing'])
+    ->middleware(['auth', 'role:kitchen_staff'])
+    ->name('kitchen.orders.preparing');
 
+Route::patch('/kitchen/orders/{order}/ready', [KitchenOrderController::class, 'markReady'])
+    ->middleware(['auth', 'role:kitchen_staff'])
+    ->name('kitchen.orders.ready');
 
-
-
-
-
-
+// Cashier Routes
 Route::get('/cashier/dashboard', [BillingController::class, 'index'])
     ->middleware(['auth', 'role:cashier'])
     ->name('cashier.dashboard');
@@ -90,8 +96,7 @@ Route::get('/kitchen', [KitchenController::class, 'index'])
     ->middleware(['auth', 'role:kitchen_staff'])
     ->name('kitchen.dashboard');
 
-                // User Management Routes
-
+// User Management Routes
 Route::get('/admin/users/create', [UserController::class, 'create'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.create');
@@ -99,7 +104,6 @@ Route::get('/admin/users/create', [UserController::class, 'create'])
 Route::post('/admin/users', [UserController::class, 'store'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.store');
-
 
 Route::get('/admin/users/{user}/edit', [UserController::class, 'edit'])
     ->middleware(['auth', 'role:admin'])
@@ -109,24 +113,21 @@ Route::put('/admin/users/{user}', [UserController::class, 'update'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.update');
 
-    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])
+Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.destroy');
 
-                    // Menu Item Routes
-
-
+// Menu Item Routes
 Route::get('/admin/menu-items', [MenuItemController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.menu-items.index');
 
-             // Category Routes
-
-    Route::get('/admin/categories', [CategoryController::class, 'index'])
+// Category Routes
+Route::get('/admin/categories', [CategoryController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.categories.index');
 
-    Route::get('/admin/categories/create', [CategoryController::class, 'create'])
+Route::get('/admin/categories/create', [CategoryController::class, 'create'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.categories.create');
 
@@ -134,8 +135,7 @@ Route::post('/admin/categories', [CategoryController::class, 'store'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.categories.store');
 
-
-    Route::get('/admin/categories/{category}/edit', [CategoryController::class, 'edit'])
+Route::get('/admin/categories/{category}/edit', [CategoryController::class, 'edit'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.categories.edit');
 
@@ -147,7 +147,7 @@ Route::delete('/admin/categories/{category}', [CategoryController::class, 'destr
     ->middleware(['auth', 'role:admin'])
     ->name('admin.categories.destroy');
 
-               // Menu Item Routes
+// Menu Item Routes
 Route::get('/admin/menu-items/create', [MenuItemController::class, 'create'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.menu-items.create');
@@ -156,8 +156,7 @@ Route::post('/admin/menu-items', [MenuItemController::class, 'store'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.menu-items.store');
 
-            // Edit and Delete routes for Menu Items
-
+// Edit and Delete routes for Menu Items
 Route::get('/admin/menu-items/{menuItem}/edit', [MenuItemController::class, 'edit'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.menu-items.edit');
@@ -170,15 +169,13 @@ Route::delete('/admin/menu-items/{menuItem}', [MenuItemController::class, 'destr
     ->middleware(['auth', 'role:admin'])
     ->name('admin.menu-items.destroy');
 
-    // Restaurant Table Routes
-
-    Route::get('/admin/tables', [TableController::class, 'index'])
+// Restaurant Table Routes
+Route::get('/admin/tables', [TableController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.tables.index');
 
-            // Create, Edit, and Delete routes for Restaurant Tables
-
-    Route::get('/admin/tables/create', [TableController::class, 'create'])
+// Create, Edit, and Delete routes for Restaurant Tables
+Route::get('/admin/tables/create', [TableController::class, 'create'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.tables.create');
 
@@ -198,9 +195,8 @@ Route::delete('/admin/tables/{restaurantTable}', [TableController::class, 'destr
     ->middleware(['auth', 'role:admin'])
     ->name('admin.tables.destroy');
 
-       // Public Menu Route
-
-    Route::get('/scan/{token}', [PublicMenuController::class, 'index'])
+// Public Menu Route
+Route::get('/scan/{token}', [PublicMenuController::class, 'index'])
     ->name('scan.menu');
 
 require __DIR__.'/auth.php';
