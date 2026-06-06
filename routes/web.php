@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TableController;
 use App\Http\Controllers\Waiter\OrderController;
 use App\Http\Controllers\Cashier\BillingController;
+use App\Http\Controllers\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Kitchen\KitchenController;
 use App\Http\Controllers\PublicMenuController;
 use App\Http\Controllers\Admin\MenuItemController;
@@ -21,7 +22,6 @@ Route::get('/', function () {
     }
 
     return redirect('/dashboard');
-
 });
 
 Route::get('/dashboard', function () {
@@ -35,7 +35,6 @@ Route::get('/dashboard', function () {
         'kitchen_staff' => redirect('/kitchen'),
         default => redirect('/'),
     };
-
 })->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -88,13 +87,31 @@ Route::patch('/kitchen/orders/{order}/ready', [KitchenOrderController::class, 'm
     ->name('kitchen.orders.ready');
 
 // Cashier Routes
-Route::get('/cashier/dashboard', [BillingController::class, 'index'])
+Route::get('/cashier/dashboard', function () {
+    return redirect()->route('cashier.orders.index');
+})
     ->middleware(['auth', 'role:cashier'])
     ->name('cashier.dashboard');
 
 Route::get('/kitchen', [KitchenController::class, 'index'])
     ->middleware(['auth', 'role:kitchen_staff'])
     ->name('kitchen.dashboard');
+
+// Cashier Orders Routes
+Route::get('/cashier/orders', [CashierOrderController::class, 'index'])
+    ->middleware(['auth', 'role:cashier'])
+    ->name('cashier.orders.index');
+
+Route::patch('/cashier/orders/{order}/complete', [CashierOrderController::class, 'complete'])
+    ->middleware(['auth', 'role:cashier'])
+    ->name('cashier.orders.complete');
+
+// Cashier Order History Route
+
+Route::get('/cashier/orders/history', [CashierOrderController::class, 'history'])
+    ->middleware(['auth', 'role:cashier'])
+    ->name('cashier.orders.history');
+
 
 // User Management Routes
 Route::get('/admin/users/create', [UserController::class, 'create'])
@@ -199,4 +216,4 @@ Route::delete('/admin/tables/{restaurantTable}', [TableController::class, 'destr
 Route::get('/scan/{token}', [PublicMenuController::class, 'index'])
     ->name('scan.menu');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
