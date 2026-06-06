@@ -50,6 +50,17 @@
                             <p>Tables</p>
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reservations.index') }}"
+                            class="nav-link {{ request()->routeIs('admin.reservations.*') ? 'active' : '' }}">
+
+                            <i class="nav-icon fas fa-calendar-check"></i>
+
+                            <p>Reservations</p>
+
+                        </a>
+                    </li>
                 @elseif(Auth::user()->role === 'waiter')
                     <li class="nav-item">
                         <a href="{{ route('waiter.orders.index') }}"

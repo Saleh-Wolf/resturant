@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TableController;
+use App\Http\Controllers\Admin\ReservationController;
 use App\Http\Controllers\Waiter\OrderController;
 use App\Http\Controllers\Cashier\BillingController;
 use App\Http\Controllers\Cashier\OrderController as CashierOrderController;
@@ -215,5 +216,16 @@ Route::delete('/admin/tables/{restaurantTable}', [TableController::class, 'destr
 // Public Menu Route
 Route::get('/scan/{token}', [PublicMenuController::class, 'index'])
     ->name('scan.menu');
+
+
+
+                // Reservation Routes
+    Route::get('/admin/reservations', [ReservationController::class, 'index'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reservations.index');
+
+Route::get('/admin/reservations/create', [ReservationController::class, 'create'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reservations.create');
 
 require __DIR__ . '/auth.php';
