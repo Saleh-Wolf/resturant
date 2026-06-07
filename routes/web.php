@@ -228,4 +228,19 @@ Route::get('/admin/reservations/create', [ReservationController::class, 'create'
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reservations.create');
 
+            // Store and Confirm Reservation Routes
+    Route::post('/admin/reservations', [ReservationController::class, 'store'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reservations.store');
+    
+    Route::patch('/admin/reservations/{reservation}/confirm',
+    [ReservationController::class, 'confirm'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reservations.confirm');
+
+Route::patch('/admin/reservations/{reservation}/cancel',
+    [ReservationController::class, 'cancel'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reservations.cancel');
+
 require __DIR__ . '/auth.php';
