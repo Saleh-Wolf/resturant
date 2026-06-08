@@ -6,6 +6,7 @@ use App\Models\RestaurantTable;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TableController extends Controller
 {
@@ -148,4 +149,12 @@ class TableController extends Controller
             ->route('admin.tables.index')
             ->with('success', 'Table deleted successfully');
     }
+
+    public function qr(RestaurantTable $table)
+{
+    return view(
+        'admin.tables.qr',
+        compact('table')
+    );
+}
 }

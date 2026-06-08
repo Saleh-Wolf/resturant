@@ -278,4 +278,11 @@ Route::delete('/admin/reservations/{reservation}', [ReservationController::class
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reservations.destroy');
 
+
+    // QR Code Route for Restaurant Tables
+
+    Route::get('/admin/tables/{table}/qr', [TableController::class, 'qr'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.tables.qr');
+
 require __DIR__ . '/auth.php';

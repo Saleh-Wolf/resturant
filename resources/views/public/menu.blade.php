@@ -1,46 +1,101 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Restaurant Menu</title>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Restaurant Menu
+    </title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
 </head>
 
-<body>
+<body class="bg-light">
 
-    <h1>
-        Welcome
-    </h1>
+<div class="container py-5">
 
-    <h2>
-        Table:
-        {{ $table->table_number }}
-    </h2>
+    <div class="text-center mb-5">
+
+        <h1 class="fw-bold">
+            Restaurant Menu
+        </h1>
+
+        <p class="text-muted">
+
+            Table #{{ $table->table_number }}
+
+        </p>
+
+    </div>
 
     @foreach($categories as $category)
 
-        <h3>
-            {{ $category->name }}
-        </h3>
+        <div class="card mb-4 shadow-sm">
 
-        <ul>
+            <div class="card-header bg-dark text-white">
 
-            @foreach($category->menuItems as $item)
+                <h3 class="mb-0">
 
-                <li>
+                    {{ $category->name }}
 
-                    {{ $item->name }}
+                </h3>
 
-                    -
+            </div>
 
-                    {{ $item->price }}
+            <div class="card-body">
 
-                </li>
+                <div class="row">
 
-            @endforeach
+                    @foreach($category->menuItems as $item)
 
-        </ul>
+                        <div class="col-md-6 mb-3">
+
+                            <div class="border rounded p-3 h-100">
+
+                                <h5 class="mb-2">
+
+                                    {{ $item->name }}
+
+                                </h5>
+
+                                @if($item->description)
+
+                                    <p class="text-muted mb-2">
+
+                                        {{ $item->description }}
+
+                                    </p>
+
+                                @endif
+
+                                <strong class="text-success">
+
+                                    {{ number_format($item->price, 2) }}
+
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    @endforeach
+
+                </div>
+
+            </div>
+
+        </div>
 
     @endforeach
+
+</div>
 
 </body>
 
