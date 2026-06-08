@@ -17,6 +17,7 @@ use App\Http\Controllers\PublicMenuController;
 use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Kitchen\OrderController as KitchenOrderController;
 use App\Http\Controllers\Admin\OfferController;
+use App\Http\Controllers\Admin\SectionController;
 
 Route::get('/', function () {
 
@@ -80,6 +81,37 @@ Route::put('/admin/offers/{offer}', [OfferController::class, 'update'])
 Route::delete('/admin/offers/{offer}', [OfferController::class, 'destroy'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.offers.destroy');
+
+// Section Routes
+
+Route::get('/admin/sections', [SectionController::class, 'index'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.sections.index');
+
+Route::get('/admin/sections/create', [SectionController::class, 'create'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.sections.create');
+
+
+    Route::post('/admin/sections', [SectionController::class, 'store'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.sections.store');
+
+
+    Route::get('/admin/sections/{section}/edit', [SectionController::class, 'edit'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.sections.edit');
+
+Route::put('/admin/sections/{section}', [SectionController::class, 'update'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.sections.update');
+
+Route::delete('/admin/sections/{section}', [SectionController::class, 'destroy'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.sections.destroy');
+
+
+
 
 
 

@@ -16,4 +16,9 @@ class Category extends Model
     {
         return $this->hasMany(MenuItem::class);
     }
+
+public function section()
+{
+    return $this->belongsTo(Section::class);
+}
 }
