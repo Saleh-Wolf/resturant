@@ -25,4 +25,9 @@ class MenuItem extends Model
 {
     return $this->hasMany(OrderItem::class);
 }
+
+public function offers()
+{
+    return $this->belongsToMany(Offer::class);
+}
 }

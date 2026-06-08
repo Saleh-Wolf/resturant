@@ -86,13 +86,41 @@ class OrderController extends Controller
                 $menuItem = MenuItem::findOrFail($menuItemId);
 
                 $quantity = (int) $itemData['quantity'];
-                $unitPrice = $menuItem->price;
+
+                $originalUnitPrice = $menuItem->price;
+                $unitPrice = $originalUnitPrice;
+                $discountAmount = 0;
+                $offerId = null;
+
+                $activeOffer = $menuItem->offers()
+                    ->where('is_active', true)
+                    ->whereDate('start_date', '<=', today())
+                    ->whereDate('end_date', '>=', today())
+                    ->first();
+
+                if ($activeOffer) {
+                    $offerId = $activeOffer->getKey();
+
+                    if ($activeOffer->discount_type === 'percentage') {
+                        $discountAmount = ($originalUnitPrice * $activeOffer->discount_value) / 100;
+                    } else {
+                        $discountAmount = $activeOffer->discount_value;
+                    }
+
+                    $discountAmount = min($discountAmount, $originalUnitPrice);
+
+                    $unitPrice = $originalUnitPrice - $discountAmount;
+                }
+
                 $totalPrice = $unitPrice * $quantity;
 
                 $order->items()->create([
                     'menu_item_id' => $menuItem->getKey(),
+                    'offer_id' => $offerId,
                     'quantity' => $quantity,
+                    'original_unit_price' => $originalUnitPrice,
                     'unit_price' => $unitPrice,
+                    'discount_amount' => $discountAmount,
                     'total_price' => $totalPrice,
                     'notes' => $itemData['notes'] ?? null,
                 ]);

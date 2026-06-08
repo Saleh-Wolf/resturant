@@ -16,6 +16,7 @@ use App\Http\Controllers\Kitchen\KitchenController;
 use App\Http\Controllers\PublicMenuController;
 use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Kitchen\OrderController as KitchenOrderController;
+use App\Http\Controllers\Admin\OfferController;
 
 Route::get('/', function () {
 
@@ -55,6 +56,21 @@ Route::get('/admin/users', [UserController::class, 'index'])
     ->name('admin.users.index');
 
         
+Route::get('/admin/offers', [OfferController::class, 'index'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.offers.index');
+
+Route::get('/admin/offers/create', [OfferController::class, 'create'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.offers.create');
+
+Route::post('/admin/offers', [OfferController::class, 'store'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.offers.store');
+
+
+
+
     Route::get('/admin/reports/sales', [ReportController::class, 'sales'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reports.sales');
