@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TableController;
 use App\Http\Controllers\Admin\ReservationController;
@@ -52,6 +53,12 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
 Route::get('/admin/users', [UserController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.index');
+
+        
+    Route::get('/admin/reports/sales', [ReportController::class, 'sales'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.sales');
+
 
 // Waiter Routes
 Route::get('/waiter/dashboard', [OrderController::class, 'index'])

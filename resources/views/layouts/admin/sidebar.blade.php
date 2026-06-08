@@ -52,6 +52,17 @@
                     </li>
 
                     <li class="nav-item">
+                        <a href="{{ route('admin.reports.sales') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+
+                            <i class="nav-icon fas fa-chart-bar"></i>
+
+                            <p>Reports</p>
+
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a href="{{ route('admin.reservations.index') }}"
                             class="nav-link {{ request()->routeIs('admin.reservations.*') ? 'active' : '' }}">
 
