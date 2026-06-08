@@ -6,6 +6,8 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Http\Controllers\Controller;
+use App\Models\OrderItem;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -99,6 +101,22 @@ class ReportController extends Controller
         return view(
             'admin.reports.reservations',
             compact('reservations')
+        );
+    }
+    public function topSellingItems()
+    {
+        $items = OrderItem::select(
+            'menu_item_id',
+            DB::raw('SUM(quantity) as total_quantity')
+        )
+            ->with('menuItem')
+            ->groupBy('menu_item_id')
+            ->orderByDesc('total_quantity')
+            ->paginate(15);
+
+        return view(
+            'admin.reports.top-selling-items',
+            compact('items')
         );
     }
 }

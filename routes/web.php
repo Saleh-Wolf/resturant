@@ -70,6 +70,12 @@ Route::get('/admin/users', [UserController::class, 'index'])
     ->name('admin.reports.reservations');
 
 
+
+    Route::get('/admin/reports/top-selling-items', [ReportController::class, 'topSellingItems'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.top-selling-items');
+
+
 // Waiter Routes
 Route::get('/waiter/dashboard', [OrderController::class, 'index'])
     ->middleware(['auth', 'role:waiter'])

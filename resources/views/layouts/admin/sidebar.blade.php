@@ -84,6 +84,17 @@
 
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.top-selling-items') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.top-selling-items') ? 'active' : '' }}">
+
+                            <i class="nav-icon fas fa-trophy"></i>
+
+                            <p>Top Selling Items</p>
+
+                        </a>
+                    </li>
                 @elseif(Auth::user()->role === 'waiter')
                     <li class="nav-item">
                         <a href="{{ route('waiter.orders.index') }}"
