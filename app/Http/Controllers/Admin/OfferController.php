@@ -32,39 +32,93 @@ class OfferController extends Controller
         );
     }
 
-     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => ['required', 'string', 'max:100'],
-        'description' => ['nullable', 'string'],
-        'discount_type' => ['required', 'in:percentage,fixed'],
-        'discount_value' => ['required', 'numeric', 'min:0'],
-        'start_date' => ['required', 'date'],
-        'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-        'menu_items' => ['required', 'array', 'min:1'],
-        'menu_items.*' => ['exists:menu_items,id'],
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'description' => ['nullable', 'string'],
+            'discount_type' => ['required', 'in:percentage,fixed'],
+            'discount_value' => ['required', 'numeric', 'min:0'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'menu_items' => ['required', 'array', 'min:1'],
+            'menu_items.*' => ['exists:menu_items,id'],
+        ]);
 
-    $offer = Offer::create([
-        'name' => $validated['name'],
-        'description' => $validated['description'] ?? null,
-        'discount_type' => $validated['discount_type'],
-        'discount_value' => $validated['discount_value'],
-        'start_date' => $validated['start_date'],
-        'end_date' => $validated['end_date'],
-        'is_active' => $request->has('is_active'),
-        'display_on_menu' => $request->has('display_on_menu'),
-    ]);
+        $offer = Offer::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'discount_type' => $validated['discount_type'],
+            'discount_value' => $validated['discount_value'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'is_active' => $request->has('is_active'),
+            'display_on_menu' => $request->has('display_on_menu'),
+        ]);
 
-    $offer->menuItems()->sync(
-        $validated['menu_items']
-    );
-
-    return redirect()
-        ->route('admin.offers.index')
-        ->with(
-            'success',
-            'Offer created successfully.'
+        $offer->menuItems()->sync(
+            $validated['menu_items']
         );
-}
+
+        return redirect()
+            ->route('admin.offers.index')
+            ->with(
+                'success',
+                'Offer created successfully.'
+            );
+    }
+
+    public function edit(Offer $offer)
+    {
+        $menuItems = MenuItem::where('is_available', true)->get();
+
+        $selectedItems = $offer->menuItems()
+            ->pluck('menu_items.id')
+            ->toArray();
+
+        return view(
+            'admin.offers.edit',
+            compact('offer', 'menuItems', 'selectedItems')
+        );
+    }
+
+    public function update(Request $request, Offer $offer)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'description' => ['nullable', 'string'],
+            'discount_type' => ['required', 'in:percentage,fixed'],
+            'discount_value' => ['required', 'numeric', 'min:0'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'menu_items' => ['required', 'array', 'min:1'],
+            'menu_items.*' => ['exists:menu_items,id'],
+        ]);
+
+        $offer->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'discount_type' => $validated['discount_type'],
+            'discount_value' => $validated['discount_value'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'is_active' => $request->has('is_active'),
+            'display_on_menu' => $request->has('display_on_menu'),
+        ]);
+
+        $offer->menuItems()->sync($validated['menu_items']);
+
+        return redirect()
+            ->route('admin.offers.index')
+            ->with('success', 'Offer updated successfully.');
+    }
+
+    public function destroy(Offer $offer)
+    {
+        $offer->delete();
+
+        return redirect()
+            ->route('admin.offers.index')
+            ->with('success', 'Offer deleted successfully.');
+    }
 }

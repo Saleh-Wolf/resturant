@@ -55,7 +55,7 @@ Route::get('/admin/users', [UserController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.index');
 
-        
+        //offers routes
 Route::get('/admin/offers', [OfferController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.offers.index');
@@ -67,7 +67,19 @@ Route::get('/admin/offers/create', [OfferController::class, 'create'])
 Route::post('/admin/offers', [OfferController::class, 'store'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.offers.store');
+    
 
+    Route::get('/admin/offers/{offer}/edit', [OfferController::class, 'edit'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.offers.edit');
+
+Route::put('/admin/offers/{offer}', [OfferController::class, 'update'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.offers.update');
+
+Route::delete('/admin/offers/{offer}', [OfferController::class, 'destroy'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.offers.destroy');
 
 
 

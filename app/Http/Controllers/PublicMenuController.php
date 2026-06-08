@@ -16,10 +16,8 @@ class PublicMenuController extends Controller
 
         $categories = Category::with([
             'menuItems' => function ($query) {
-                $query->where(
-                    'is_available',
-                    true
-                );
+                $query->where('is_available', true)
+                    ->with('offers');
             }
         ])->get();
 
@@ -31,5 +29,4 @@ class PublicMenuController extends Controller
             )
         );
     }
-    
 }

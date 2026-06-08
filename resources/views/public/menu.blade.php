@@ -28,9 +28,7 @@
         </h1>
 
         <p class="text-muted">
-
             Table #{{ $table->table_number }}
-
         </p>
 
     </div>
@@ -42,9 +40,7 @@
             <div class="card-header bg-dark text-white">
 
                 <h3 class="mb-0">
-
                     {{ $category->name }}
-
                 </h3>
 
             </div>
@@ -55,31 +51,82 @@
 
                     @foreach($category->menuItems as $item)
 
+                        @php
+                            $activeOffer = $item->offers()
+                                ->where('is_active', true)
+                                ->where('display_on_menu', true)
+                                ->whereDate('start_date', '<=', today())
+                                ->whereDate('end_date', '>=', today())
+                                ->first();
+
+                            $discountedPrice = $item->price;
+                            $discount = 0;
+
+                            if ($activeOffer) {
+                                if ($activeOffer->discount_type === 'percentage') {
+                                    $discount = ($item->price * $activeOffer->discount_value) / 100;
+                                } else {
+                                    $discount = $activeOffer->discount_value;
+                                }
+
+                                $discount = min($discount, $item->price);
+                                $discountedPrice = $item->price - $discount;
+                            }
+                        @endphp
+
                         <div class="col-md-6 mb-3">
 
-                            <div class="border rounded p-3 h-100">
+                            <div class="border rounded p-3 h-100 bg-white">
 
-                                <h5 class="mb-2">
+                                <div class="d-flex justify-content-between align-items-start">
 
-                                    {{ $item->name }}
+                                    <h5 class="mb-2">
+                                        {{ $item->name }}
+                                    </h5>
 
-                                </h5>
+                                    @if($activeOffer)
+                                        <span class="badge bg-success">
+                                            OFFER
+                                        </span>
+                                    @endif
+
+                                </div>
 
                                 @if($item->description)
 
                                     <p class="text-muted mb-2">
-
                                         {{ $item->description }}
-
                                     </p>
 
                                 @endif
 
-                                <strong class="text-success">
+                                @if($activeOffer)
 
-                                    {{ number_format($item->price, 2) }}
+                                    <p class="mb-1">
+                                        <small class="text-success fw-bold">
+                                            {{ $activeOffer->name }}
+                                        </small>
+                                    </p>
 
-                                </strong>
+                                    <div>
+                                        <span class="text-muted me-2">
+                                            <del>
+                                                {{ number_format($item->price, 2) }} EGP
+                                            </del>
+                                        </span>
+
+                                        <strong class="text-success">
+                                            {{ number_format($discountedPrice, 2) }} EGP
+                                        </strong>
+                                    </div>
+
+                                @else
+
+                                    <strong class="text-success">
+                                        {{ number_format($item->price, 2) }} EGP
+                                    </strong>
+
+                                @endif
 
                             </div>
 
