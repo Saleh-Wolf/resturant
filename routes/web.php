@@ -59,6 +59,16 @@ Route::get('/admin/users', [UserController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reports.sales');
 
+    Route::get('/admin/reports/orders', [ReportController::class, 'orders'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.orders');
+
+
+
+    Route::get('/admin/reports/reservations', [ReportController::class, 'reservations'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.reservations');
+
 
 // Waiter Routes
 Route::get('/waiter/dashboard', [OrderController::class, 'index'])

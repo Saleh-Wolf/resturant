@@ -52,23 +52,35 @@
                     </li>
 
                     <li class="nav-item">
-                        <a href="{{ route('admin.reports.sales') }}"
-                            class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-
-                            <i class="nav-icon fas fa-chart-bar"></i>
-
-                            <p>Reports</p>
-
+                        <a href="{{ route('admin.reservations.index') }}"
+                            class="nav-link {{ request()->routeIs('admin.reservations.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-calendar-check"></i>
+                            <p>Reservations</p>
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a href="{{ route('admin.reservations.index') }}"
-                            class="nav-link {{ request()->routeIs('admin.reservations.*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.reports.sales') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.sales') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-money-bill-wave"></i>
+                            <p>Sales Report</p>
+                        </a>
+                    </li>
 
-                            <i class="nav-icon fas fa-calendar-check"></i>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.orders') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.orders') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-receipt"></i>
+                            <p>Orders Report</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.reservations') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.reservations') ? 'active' : '' }}">
 
-                            <p>Reservations</p>
+                            <i class="nav-icon fas fa-calendar-alt"></i>
+
+                            <p>Reservations Report</p>
 
                         </a>
                     </li>
@@ -90,9 +102,8 @@
                     </li>
                 @elseif(Auth::user()->role === 'cashier')
                     <li class="nav-item">
-                        <a href="{{ route('cashier.orders.index') }}
-                           class="nav-link
-                            {{ request()->routeIs('cashier.*') ? 'active' : '' }}">
+                        <a href="{{ route('cashier.orders.index') }}"
+                            class="nav-link {{ request()->routeIs('cashier.orders.index') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-cash-register"></i>
                             <p>Cashier</p>
                         </a>
@@ -101,11 +112,8 @@
                     <li class="nav-item">
                         <a href="{{ route('cashier.orders.history') }}"
                             class="nav-link {{ request()->routeIs('cashier.orders.history') ? 'active' : '' }}">
-
                             <i class="nav-icon fas fa-history"></i>
-
                             <p>History</p>
-
                         </a>
                     </li>
                 @endif

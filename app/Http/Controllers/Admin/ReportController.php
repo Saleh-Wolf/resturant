@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Order;
 use Illuminate\Http\Request;
+use App\Models\Reservation;
 use App\Http\Controllers\Controller;
 
 class ReportController extends Controller
@@ -52,6 +53,52 @@ class ReportController extends Controller
                 'completedOrdersCount',
                 'averageOrderValue'
             )
+        );
+    }
+    public function orders(Request $request)
+    {
+        $query = Order::with([
+            'table',
+            'waiter'
+        ]);
+
+        if ($request->filled('status')) {
+            $query->where(
+                'status',
+                $request->status
+            );
+        }
+
+        $orders = $query
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view(
+            'admin.reports.orders',
+            compact('orders')
+        );
+    }
+
+    public function reservations(Request $request)
+    {
+        $query = Reservation::with('table');
+
+        if ($request->filled('status')) {
+            $query->where(
+                'status',
+                $request->status
+            );
+        }
+
+        $reservations = $query
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view(
+            'admin.reports.reservations',
+            compact('reservations')
         );
     }
 }
