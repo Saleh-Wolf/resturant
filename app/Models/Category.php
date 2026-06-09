@@ -22,4 +22,9 @@ class Category extends Model
     {
         return $this->hasMany(MenuItem::class);
     }
+
+    public function subcategories()
+    {
+        return $this->hasMany(Subcategory::class);
+    }
 }

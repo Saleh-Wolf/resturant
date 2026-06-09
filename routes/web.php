@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\SubcategoryController;
 use App\Http\Controllers\Admin\TableController;
 use App\Http\Controllers\Admin\ReservationController;
 use App\Http\Controllers\Waiter\OrderController;
@@ -344,5 +345,21 @@ Route::delete('/admin/reservations/{reservation}', [ReservationController::class
     Route::get('/admin/tables/{table}/qr', [TableController::class, 'qr'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.tables.qr');
+
+
+
+            // Subcategory Routes
+    Route::get('/admin/subcategories', [SubcategoryController::class, 'index'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.subcategories.index');
+
+Route::get('/admin/subcategories/create', [SubcategoryController::class, 'create'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.subcategories.create');
+
+
+    Route::post('/admin/subcategories', [SubcategoryController::class, 'store'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.subcategories.store');
 
 require __DIR__ . '/auth.php';
