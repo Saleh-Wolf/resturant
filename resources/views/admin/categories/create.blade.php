@@ -33,6 +33,23 @@
                 @csrf
 
                 <div class="form-group">
+                    <label>Section</label>
+
+                    <select name="section_id"
+                            class="form-control"
+                            required>
+                        <option value="">Select Section</option>
+
+                        @foreach($sections as $section)
+                            <option value="{{ $section->id }}"
+                                {{ old('section_id') == $section->id ? 'selected' : '' }}>
+                                {{ $section->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label>Category Name</label>
 
                     <input type="text"
@@ -44,9 +61,7 @@
 
                 <button type="submit"
                         class="btn btn-primary">
-
                     Create Category
-
                 </button>
 
             </form>
