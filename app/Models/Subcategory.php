@@ -19,4 +19,12 @@ class Subcategory extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function menuItems()
+{
+    return $this->hasMany(MenuItem::class);
+}
+
+
+
 }

@@ -25,6 +25,7 @@
                 <thead>
                     <tr>
                         <th>Order #</th>
+                        <th>Type</th>
                         <th>Table</th>
                         <th>Waiter</th>
                         <th>Status</th>
@@ -38,8 +39,26 @@
                     @forelse ($orders as $order)
                         <tr>
                             <td>#{{ $order->id }}</td>
-                            <td>{{ $order->table->table_number }}</td>
-                            <td>{{ $order->waiter->name }}</td>
+
+                            <td>
+                                @if($order->order_type === 'takeaway')
+                                    <span class="badge badge-info">
+                                        Takeaway
+                                    </span>
+                                @else
+                                    <span class="badge badge-success">
+                                        Dine In
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td>
+                                {{ $order->table->table_number ?? '-' }}
+                            </td>
+
+                            <td>
+                                {{ $order->waiter->name ?? '-' }}
+                            </td>
 
                             <td>
                                 <span class="badge badge-warning">
@@ -47,8 +66,13 @@
                                 </span>
                             </td>
 
-                            <td>{{ number_format($order->total, 2) }} EGP</td>
-                            <td>{{ $order->created_at->format('Y-m-d H:i') }}</td>
+                            <td>
+                                {{ number_format($order->total, 2) }} EGP
+                            </td>
+
+                            <td>
+                                {{ $order->created_at->format('Y-m-d H:i') }}
+                            </td>
 
                             <td>
                                 <a href="{{ route('waiter.orders.show', $order) }}"
@@ -59,7 +83,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted">
+                            <td colspan="8" class="text-center text-muted">
                                 No orders found.
                             </td>
                         </tr>

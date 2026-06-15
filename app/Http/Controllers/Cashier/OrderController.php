@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Cashier;
 
+use App\Models\Bill;
 use App\Models\Order;
 use App\Models\RestaurantTable;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
@@ -13,18 +15,20 @@ class OrderController extends Controller
         $orders = Order::with([
             'table',
             'waiter',
-            'items.menuItem'
+            'items.menuItem',
+            'items.offer',
         ])
             ->where('status', 'ready')
+            ->whereDoesntHave('bill')
             ->latest()
             ->get();
 
-        $todaySales = Order::where('status', 'completed')
-            ->whereDate('created_at', today())
-            ->sum('total');
+        $todaySales = Bill::where('payment_status', 'paid')
+            ->whereDate('paid_at', today())
+            ->sum('grand_total');
 
-        $completedOrdersToday = Order::where('status', 'completed')
-            ->whereDate('created_at', today())
+        $completedOrdersToday = Bill::where('payment_status', 'paid')
+            ->whereDate('paid_at', today())
             ->count();
 
         return view(
@@ -37,12 +41,12 @@ class OrderController extends Controller
         );
     }
 
-
     public function history()
     {
         $orders = Order::with([
             'table',
-            'waiter'
+            'waiter',
+            'bill'
         ])
             ->where('status', 'completed')
             ->latest()
@@ -54,9 +58,47 @@ class OrderController extends Controller
         );
     }
 
-
     public function complete(Order $order)
     {
+        if ($order->bill) {
+            return back()
+                ->with('error', 'This order already has a bill.');
+        }
+
+        $order->load([
+            'items',
+            'table',
+            'waiter',
+        ]);
+
+        $subtotal = $order->items->sum(function ($item) {
+            return $item->original_unit_price * $item->quantity;
+        });
+
+        $discountTotal = $order->items->sum(function ($item) {
+            return $item->discount_amount * $item->quantity;
+        });
+
+        $taxAmount = 0;
+        $serviceCharge = 0;
+        $grandTotal = $order->total;
+
+        Bill::create([
+            'bill_number' => 'BILL-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -4)),
+            'order_id' => $order->id,
+            'cashier_id' => Auth::id(),
+            'subtotal' => $subtotal,
+            'discount_total' => $discountTotal,
+            'tax_amount' => $taxAmount,
+            'service_charge' => $serviceCharge,
+            'grand_total' => $grandTotal,
+            'payment_method' => 'cash',
+            'amount_received' => $grandTotal,
+            'change_amount' => 0,
+            'payment_status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
         $order->update([
             'status' => 'completed',
         ]);
@@ -71,7 +113,7 @@ class OrderController extends Controller
         return back()
             ->with(
                 'success',
-                'Order completed successfully'
+                'Bill generated and order completed successfully'
             );
     }
 }

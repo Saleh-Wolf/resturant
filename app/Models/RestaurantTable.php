@@ -7,26 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 class RestaurantTable extends Model
 {
     protected $fillable = [
-    'table_number',
-    'type',
-    'capacity',
-    'min_capacity',
-    'max_capacity',
-    'location',
-    'status',
-    'notes',
-    'qr_token',
-];
+        'table_number',
+        'type',
+        'min_capacity',
+        'max_capacity',
+        'location',
+        'status',
+        'notes',
+        'qr_token',
+    ];
 
 
-public function orders()
-{
-   return $this->hasMany(Order::class);
-}
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'restaurant_table_id');
+    }
 
-public function reservations()
-{
-    return $this->hasMany(Reservation::class);
-}
-
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class, 'restaurant_table_id');
+    }
 }

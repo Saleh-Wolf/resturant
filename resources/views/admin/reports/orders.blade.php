@@ -18,7 +18,7 @@
                 <select name="status" class="form-control">
                     <option value="">All Statuses</option>
 
-                    @foreach(['pending', 'preparing', 'ready', 'completed', 'cancelled'] as $status)
+                    @foreach (['pending', 'preparing', 'ready', 'completed', 'cancelled'] as $status)
                         <option value="{{ $status }}"
                             {{ request('status') == $status ? 'selected' : '' }}>
                             {{ ucfirst($status) }}
@@ -51,6 +51,8 @@
                         <th>Table</th>
                         <th>Waiter</th>
                         <th>Status</th>
+                        <th>Bill #</th>
+                        <th>Payment</th>
                         <th>Total</th>
                         <th>Created At</th>
                     </tr>
@@ -60,11 +62,21 @@
                     @forelse($orders as $order)
                         <tr>
                             <td>#{{ $order->id }}</td>
-                            <td>{{ $order->table->table_number }}</td>
-                            <td>{{ $order->waiter->name }}</td>
 
                             <td>
-                                @if($order->status === 'pending')
+                               @if($order->order_type === 'takeaway')
+    <span class="badge badge-info">Takeaway</span>
+@else
+    {{ $order->table->table_number ?? '-' }}
+@endif
+                            </td>
+
+                            <td>
+                                {{ $order->waiter->name ?? '-' }}
+                            </td>
+
+                            <td>
+                                @if ($order->status === 'pending')
                                     <span class="badge badge-warning">Pending</span>
                                 @elseif($order->status === 'preparing')
                                     <span class="badge badge-info">Preparing</span>
@@ -77,13 +89,37 @@
                                 @endif
                             </td>
 
-                            <td>{{ number_format($order->total, 2) }} EGP</td>
+                            <td>
+                                @if ($order->bill)
+                                    {{ $order->bill->bill_number }}
+                                @else
+                                    -
+                                @endif
+                            </td>
 
-                            <td>{{ $order->created_at->format('Y-m-d H:i') }}</td>
+                            <td>
+                                @if ($order->bill)
+                                    <span class="badge badge-success">
+                                        {{ ucfirst($order->bill->payment_status) }}
+                                    </span>
+                                @else
+                                    <span class="badge badge-secondary">
+                                        Unpaid
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td>
+                                {{ number_format($order->total, 2) }} EGP
+                            </td>
+
+                            <td>
+                                {{ $order->created_at->format('Y-m-d H:i') }}
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center">
+                            <td colspan="8" class="text-center">
                                 No orders found.
                             </td>
                         </tr>

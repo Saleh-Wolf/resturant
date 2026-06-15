@@ -43,12 +43,35 @@
 
                         @foreach ($categories as $category)
                             <option value="{{ $category->id }}"
-                                {{ $menuItem->category_id == $category->id ? 'selected' : '' }}>
+                                {{ old('category_id', $menuItem->category_id) == $category->id ? 'selected' : '' }}>
 
+                                {{ $category->section->name ?? 'No Section' }}
+                                →
                                 {{ $category->name }}
 
                             </option>
                         @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Subcategory</label>
+
+                    <select name="subcategory_id"
+                            class="form-control"
+                            required>
+
+                        @foreach ($subcategories as $subcategory)
+                            <option value="{{ $subcategory->id }}"
+                                {{ old('subcategory_id', $menuItem->subcategory_id) == $subcategory->id ? 'selected' : '' }}>
+
+                                {{ $subcategory->category->name }}
+                                →
+                                {{ $subcategory->name }}
+
+                            </option>
+                        @endforeach
+
                     </select>
                 </div>
 
@@ -86,9 +109,8 @@
 
                     <div class="mb-2">
                         @if($menuItem->image)
-                            <img
-                                src="{{ asset('storage/' . $menuItem->image) }}"
-                                style="width:100px;height:100px;object-fit:cover;border-radius:10px;">
+                            <img src="{{ asset('storage/' . $menuItem->image) }}"
+                                 style="width:100px;height:100px;object-fit:cover;border-radius:10px;">
                         @else
                             No image
                         @endif
@@ -105,7 +127,7 @@
                            class="form-check-input"
                            name="is_available"
                            id="is_available"
-                           {{ $menuItem->is_available ? 'checked' : '' }}>
+                           {{ old('is_available', $menuItem->is_available) ? 'checked' : '' }}>
 
                     <label class="form-check-label"
                            for="is_available">

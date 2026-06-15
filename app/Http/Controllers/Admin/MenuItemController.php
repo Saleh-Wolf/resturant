@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Category;
 use App\Models\MenuItem;
+use App\Models\Subcategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
@@ -12,7 +13,10 @@ class MenuItemController extends Controller
 {
     public function index()
     {
-        $menuItems = MenuItem::with('category')
+        $menuItems = MenuItem::with([
+            'category.section',
+            'subcategory'
+        ])
             ->latest()
             ->paginate(10);
 
@@ -21,11 +25,17 @@ class MenuItemController extends Controller
 
     public function create()
     {
-        $categories = Category::all();
+        $categories = Category::with('section')
+            ->orderBy('name')
+            ->get();
+
+        $subcategories = Subcategory::with('category')
+            ->orderBy('name')
+            ->get();
 
         return view(
             'admin.menu-items.create',
-            compact('categories')
+            compact('categories', 'subcategories')
         );
     }
 
@@ -33,6 +43,7 @@ class MenuItemController extends Controller
     {
         $validated = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
+            'subcategory_id' => ['required', 'exists:subcategories,id'],
             'name' => ['required', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
@@ -50,6 +61,7 @@ class MenuItemController extends Controller
 
         MenuItem::create([
             'category_id' => $validated['category_id'],
+            'subcategory_id' => $validated['subcategory_id'],
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'price' => $validated['price'],
@@ -64,58 +76,62 @@ class MenuItemController extends Controller
     }
 
     public function edit(MenuItem $menuItem)
-{
-    $categories = Category::all();
+    {
+        $categories = Category::with('section')
+            ->orderBy('name')
+            ->get();
 
-    return view(
-        'admin.menu-items.edit',
-        compact('menuItem', 'categories')
-    );
-}
+        $subcategories = Subcategory::with('category')
+            ->orderBy('name')
+            ->get();
 
-public function update(Request $request, MenuItem $menuItem)
-{
-    $validated = $request->validate([
-        'category_id' => ['required', 'exists:categories,id'],
-        'name' => ['required', 'string', 'max:255'],
-        'price' => ['required', 'numeric', 'min:0'],
-        'description' => ['nullable', 'string'],
-        'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-    ]);
-
-    $imagePath = $menuItem->image;
-
-    if ($request->hasFile('image')) {
-
-        $imagePath = $request
-            ->file('image')
-            ->store('menu-items', 'public');
+        return view(
+            'admin.menu-items.edit',
+            compact('menuItem', 'categories', 'subcategories')
+        );
     }
 
-    $menuItem->update([
-        'category_id' => $validated['category_id'],
-        'name' => $validated['name'],
-        'slug' => Str::slug($validated['name']),
-        'price' => $validated['price'],
-        'description' => $validated['description'] ?? null,
-        'image' => $imagePath,
-        'is_available' => $request->has('is_available'),
-    ]);
+    public function update(Request $request, MenuItem $menuItem)
+    {
+        $validated = $request->validate([
+            'category_id' => ['required', 'exists:categories,id'],
+            'subcategory_id' => ['required', 'exists:subcategories,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+        ]);
 
-    return redirect()
-        ->route('admin.menu-items.index')
-        ->with('success', 'Menu item updated successfully');
-}
+        $imagePath = $menuItem->image;
 
-public function destroy(MenuItem $menuItem)
-{
-    $menuItem->delete();
+        if ($request->hasFile('image')) {
+            $imagePath = $request
+                ->file('image')
+                ->store('menu-items', 'public');
+        }
 
-    return redirect()
-        ->route('admin.menu-items.index')
-        ->with('success', 'Menu item deleted successfully');
-}
+        $menuItem->update([
+            'category_id' => $validated['category_id'],
+            'subcategory_id' => $validated['subcategory_id'],
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'price' => $validated['price'],
+            'description' => $validated['description'] ?? null,
+            'image' => $imagePath,
+            'is_available' => $request->has('is_available'),
+        ]);
 
+        return redirect()
+            ->route('admin.menu-items.index')
+            ->with('success', 'Menu item updated successfully');
+    }
 
+    public function destroy(MenuItem $menuItem)
+    {
+        $menuItem->delete();
 
+        return redirect()
+            ->route('admin.menu-items.index')
+            ->with('success', 'Menu item deleted successfully');
+    }
 }

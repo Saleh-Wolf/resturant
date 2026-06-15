@@ -4,147 +4,128 @@
 
 @section('content')
 
-<div class="container-fluid">
+    <meta http-equiv="refresh" content="15">
 
-    <h1 class="mb-4">
-        Kitchen Orders
-    </h1>
+    <div class="container-fluid">
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+        <h1 class="mb-4">Kitchen Orders</h1>
+
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>{{ $pendingOrders->count() }}</h3>
+                        <p>Pending Orders</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>{{ $preparingOrders->count() }}</h3>
+                        <p>Preparing Orders</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ $readyOrders->count() }}</h3>
+                        <p>Ready Orders</p>
+                    </div>
+                </div>
+            </div>
         </div>
-    @endif
 
-    <div class="card">
-        <div class="card-body table-responsive">
+        <div class="row">
 
-            <table class="table table-bordered table-striped">
+            @foreach ([
+            'Pending Orders' => [$pendingOrders, 'danger', 'kitchen.orders.preparing', 'Start Preparing'],
+            'In Preparation' => [$preparingOrders, 'warning', 'kitchen.orders.ready', 'Mark Ready'],
+            'Ready Orders' => [$readyOrders, 'success', null, null],
+        ] as $title => [$orders, $color, $route, $button])
+                <div class="col-md-4">
+                    <div class="card border-{{ $color }}">
+                        <div class="card-header bg-{{ $color }} {{ $color === 'warning' ? '' : 'text-white' }}">
+                            <h3 class="card-title mb-0">{{ $title }}</h3>
+                        </div>
 
-                <thead>
-                    <tr>
-                        <th>Order #</th>
-                        <th>Table</th>
-                        <th>Items</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
+                        <div class="card-body">
+                            @forelse($orders as $order)
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h4>Order #{{ $order->id }}</h4>
 
-                <tbody>
+                                        <p>
+                                            @if ($order->order_type === 'takeaway')
+                                                <span class="badge badge-info">Takeaway</span>
+                                            @else
+                                                {{ $order->table->table_number ?? '-' }}
+                                            @endif
+                                        </p>
 
-                    @forelse($orders as $order)
+                                        <p>
+                                            <strong>Created:</strong>
+                                            {{ $order->created_at->diffForHumans() }}
+                                        </p>
 
-                        <tr>
+                                        <ul>
+                                            @foreach ($order->items as $item)
+                                                <li>
+                                                    <strong>{{ $item->menuItem->name }}</strong>
+                                                    × {{ $item->quantity }}
 
-                            <td>
-                                #{{ $order->id }}
-                            </td>
+                                                    @if ($item->notes)
+                                                        <div class="text-danger">
+                                                            Note: {{ $item->notes }}
+                                                        </div>
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
 
-                            <td>
-                                {{ $order->table->table_number }}
-                            </td>
+                                        @if ($route && $button)
+                                            <form action="{{ route($route, $order) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
 
-                            <td>
-
-                                <ul class="mb-0">
-
-                                    @foreach($order->items as $item)
-
-                                        <li>
-                                            {{ $item->menuItem->name }}
-                                            ×
-                                            {{ $item->quantity }}
-                                        </li>
-
-                                    @endforeach
-
-                                </ul>
-
-                            </td>
-
-                            <td>
-
-                                @if($order->status === 'pending')
-                                    <span class="badge badge-warning">
-                                        Pending
-                                    </span>
-
-                                @elseif($order->status === 'preparing')
-                                    <span class="badge badge-info">
-                                        Preparing
-                                    </span>
-
-                                @elseif($order->status === 'ready')
-                                    <span class="badge badge-success">
-                                        Ready
-                                    </span>
-                                @endif
-
-                            </td>
-
-                            <td>
-
-                                @if($order->status === 'pending')
-
-                                    <form action="{{ route('kitchen.orders.preparing', $order) }}"
-                                          method="POST">
-
-                                        @csrf
-                                        @method('PATCH')
-
-                                        <button class="btn btn-primary btn-sm">
-
-                                            Start Preparing
-
-                                        </button>
-
-                                    </form>
-
-                                @elseif($order->status === 'preparing')
-
-                                    <form action="{{ route('kitchen.orders.ready', $order) }}"
-                                          method="POST">
-
-                                        @csrf
-                                        @method('PATCH')
-
-                                        <button class="btn btn-success btn-sm">
-
-                                            Mark Ready
-
-                                        </button>
-
-                                    </form>
-
-                                @endif
-
-                            </td>
-
-                        </tr>
-
-                    @empty
-
-                        <tr>
-
-                            <td colspan="5"
-                                class="text-center">
-
-                                No orders found
-
-                            </td>
-
-                        </tr>
-
-                    @endforelse
-
-                </tbody>
-
-            </table>
+                                                <button class="btn btn-primary btn-block">
+                                                    {{ $button }}
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="badge badge-success">
+                                                Ready for Cashier
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-muted">
+                                    No orders.
+                                </p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            @endforeach
 
         </div>
+
     </div>
-
-</div>
 
 @endsection

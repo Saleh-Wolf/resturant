@@ -6,14 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = [
-        'restaurant_table_id',
-        'user_id',
-        'status',
-        'subtotal',
-        'total',
-        'notes',
-    ];
+protected $fillable = [
+    'reservation_id',
+    'order_type',
+    'restaurant_table_id',
+    'user_id',
+    'status',
+    'subtotal',
+    'total',
+    'notes',
+];
 
     public function table()
     {
@@ -28,5 +30,15 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function reservation()
+    {
+        return $this->belongsTo(Reservation::class);
+    }
+
+    public function bill()
+    {
+        return $this->hasOne(Bill::class);
     }
 }

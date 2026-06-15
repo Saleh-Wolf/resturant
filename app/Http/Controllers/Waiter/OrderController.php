@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Waiter;
 
 use App\Models\Order;
 use App\Models\MenuItem;
+use App\Models\Reservation;
 use App\Models\RestaurantTable;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -14,7 +15,11 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with(['table', 'waiter'])
+        $orders = Order::with([
+            'table',
+            'waiter',
+            'reservation',
+        ])
             ->latest()
             ->paginate(10);
 
@@ -24,32 +29,47 @@ class OrderController extends Controller
         );
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $tables = RestaurantTable::where(
-            'status',
-            'available'
-        )->get();
+        $reservation = null;
 
-        $menuItems = MenuItem::where(
-            'is_available',
-            true
-        )->get();
+        if ($request->filled('reservation_id')) {
+            $reservation = Reservation::with('table')
+                ->findOrFail($request->reservation_id);
+        }
+
+        $tables = RestaurantTable::where('status', 'available');
+
+        if ($reservation) {
+            $tables->orWhere('id', $reservation->restaurant_table_id);
+        }
+
+        $tables = $tables->get();
+
+        $menuItems = MenuItem::where('is_available', true)->get();
 
         return view(
             'waiter.orders.create',
-            compact(
-                'tables',
-                'menuItems'
-            )
+            compact('tables', 'menuItems', 'reservation')
         );
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'restaurant_table_id' => [
+            'reservation_id' => [
+                'nullable',
+                'exists:reservations,id',
+            ],
+
+            'order_type' => [
                 'required',
+                'in:dine_in,takeaway',
+            ],
+
+            'restaurant_table_id' => [
+                'nullable',
+                'required_if:order_type,dine_in',
                 'exists:restaurant_tables,id',
             ],
 
@@ -58,6 +78,10 @@ class OrderController extends Controller
                 'array',
             ],
         ]);
+
+        if (!empty($validated['reservation_id'])) {
+            $validated['order_type'] = 'dine_in';
+        }
 
         $selectedItems = collect($request->items)
             ->filter(function ($item) {
@@ -73,7 +97,9 @@ class OrderController extends Controller
         DB::transaction(function () use ($validated, $selectedItems) {
 
             $order = Order::create([
-                'restaurant_table_id' => $validated['restaurant_table_id'],
+                'reservation_id' => $validated['reservation_id'] ?? null,
+                'order_type' => $validated['order_type'],
+                'restaurant_table_id' => $validated['restaurant_table_id'] ?? null,
                 'user_id' => Auth::id(),
                 'status' => 'pending',
                 'subtotal' => 0,
@@ -133,21 +159,32 @@ class OrderController extends Controller
                 'total' => $subtotal,
             ]);
 
-            RestaurantTable::where('id', $validated['restaurant_table_id'])
-                ->update([
-                    'status' => 'occupied',
-                ]);
+            if ($validated['order_type'] === 'dine_in' && !empty($validated['restaurant_table_id'])) {
+                RestaurantTable::where('id', $validated['restaurant_table_id'])
+                    ->update([
+                        'status' => 'occupied',
+                    ]);
+            }
+
+            if (!empty($validated['reservation_id'])) {
+                Reservation::where('id', $validated['reservation_id'])
+                    ->update([
+                        'status' => 'completed',
+                    ]);
+            }
         });
 
         return redirect()
             ->route('waiter.orders.index')
             ->with('success', 'Order created successfully');
     }
+
     public function show(Order $order)
     {
         $order->load([
             'table',
             'waiter',
+            'reservation',
             'items.menuItem'
         ]);
 

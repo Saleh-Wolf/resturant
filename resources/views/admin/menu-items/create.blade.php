@@ -36,15 +36,54 @@
                 <div class="form-group">
                     <label>Category</label>
 
-                    <select name="category_id" class="form-control" required>
-                        <option value="">Select Category</option>
+                    <select name="category_id"
+                            class="form-control"
+                            required>
+
+                        <option value="">
+                            Select Category
+                        </option>
 
                         @foreach ($categories as $category)
+
                             <option value="{{ $category->id }}"
                                 {{ old('category_id') == $category->id ? 'selected' : '' }}>
+
+                                {{ $category->section->name ?? 'No Section' }}
+                                →
                                 {{ $category->name }}
+
                             </option>
+
                         @endforeach
+
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Subcategory</label>
+
+                    <select name="subcategory_id"
+                            class="form-control"
+                            required>
+
+                        <option value="">
+                            Select Subcategory
+                        </option>
+
+                        @foreach ($subcategories as $subcategory)
+
+                            <option value="{{ $subcategory->id }}"
+                                {{ old('subcategory_id') == $subcategory->id ? 'selected' : '' }}>
+
+                                {{ $subcategory->category->name }}
+                                →
+                                {{ $subcategory->name }}
+
+                            </option>
+
+                        @endforeach
+
                     </select>
                 </div>
 
@@ -87,20 +126,27 @@
                 </div>
 
                 <div class="form-check mb-3">
+
                     <input type="checkbox"
                            name="is_available"
                            class="form-check-input"
                            id="is_available"
                            checked>
 
-                    <label class="form-check-label" for="is_available">
+                    <label class="form-check-label"
+                           for="is_available">
+
                         Available
+
                     </label>
+
                 </div>
 
                 <button type="submit"
                         class="btn btn-primary">
+
                     Create Menu Item
+
                 </button>
 
             </form>

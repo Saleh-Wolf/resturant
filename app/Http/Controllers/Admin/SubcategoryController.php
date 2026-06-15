@@ -12,7 +12,7 @@ class SubcategoryController extends Controller
 {
     public function index()
     {
-        $subcategories = Subcategory::with('category')
+        $subcategories = Subcategory::with('category.section')
             ->latest()
             ->paginate(10);
 
@@ -24,7 +24,8 @@ class SubcategoryController extends Controller
 
     public function create()
     {
-        $categories = Category::orderBy('name')
+        $categories = Category::with('section')
+            ->orderBy('name')
             ->get();
 
         return view(
@@ -34,40 +35,104 @@ class SubcategoryController extends Controller
     }
 
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'category_id' => [
-            'required',
-            'exists:categories,id',
-        ],
-        'name' => [
-            'required',
-            'string',
-            'max:255',
-            'unique:subcategories,name',
-        ],
-        'description' => [
-            'nullable',
-            'string',
-        ],
-        'display_order' => [
-            'required',
-            'integer',
-            'min:0',
-        ],
-    ]);
+    {
+        $validated = $request->validate([
+            'category_id' => [
+                'required',
+                'exists:categories,id',
+            ],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:subcategories,name',
+            ],
+            'description' => [
+                'nullable',
+                'string',
+            ],
+            'display_order' => [
+                'required',
+                'integer',
+                'min:0',
+            ],
+        ]);
 
-    Subcategory::create([
-        'category_id' => $validated['category_id'],
-        'name' => $validated['name'],
-        'slug' => Str::slug($validated['name']),
-        'description' => $validated['description'] ?? null,
-        'display_order' => $validated['display_order'],
-        'is_active' => $request->has('is_active'),
-    ]);
+        Subcategory::create([
+            'category_id' => $validated['category_id'],
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'description' => $validated['description'] ?? null,
+            'display_order' => $validated['display_order'],
+            'is_active' => $request->has('is_active'),
+        ]);
 
-    return redirect()
-        ->route('admin.subcategories.index')
-        ->with('success', 'Subcategory created successfully');
-}
+        return redirect()
+            ->route('admin.subcategories.index')
+            ->with('success', 'Subcategory created successfully');
+    }
+
+    public function edit(Subcategory $subcategory)
+    {
+        $categories = Category::with('section')
+            ->orderBy('name')
+            ->get();
+
+        return view(
+            'admin.subcategories.edit',
+            compact('subcategory', 'categories')
+        );
+    }
+
+    public function update(Request $request, Subcategory $subcategory)
+    {
+        $validated = $request->validate([
+            'category_id' => [
+                'required',
+                'exists:categories,id',
+            ],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:subcategories,name,' . $subcategory->getKey(),
+            ],
+            'description' => [
+                'nullable',
+                'string',
+            ],
+            'display_order' => [
+                'required',
+                'integer',
+                'min:0',
+            ],
+        ]);
+
+        $subcategory->update([
+            'category_id' => $validated['category_id'],
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'description' => $validated['description'] ?? null,
+            'display_order' => $validated['display_order'],
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()
+            ->route('admin.subcategories.index')
+            ->with('success', 'Subcategory updated successfully');
+    }
+
+    public function destroy(Subcategory $subcategory)
+    {
+        if ($subcategory->menuItems()->exists()) {
+            return back()
+                ->with('error', 'Cannot delete subcategory because it has menu items.');
+        }
+
+        $subcategory->delete();
+
+        return redirect()
+            ->route('admin.subcategories.index')
+            ->with('success', 'Subcategory deleted successfully');
+    }
 }

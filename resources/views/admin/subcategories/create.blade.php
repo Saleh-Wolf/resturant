@@ -4,94 +4,131 @@
 
 @section('content')
 
-    <div class="container-fluid">
+<div class="container-fluid">
 
-        <h1 class="mb-4">
-            Create Subcategory
-        </h1>
+    <h1 class="mb-4">
+        Create Subcategory
+    </h1>
 
-        <div class="card">
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-            <div class="card-body">
+    <div class="card">
 
-                <form action="{{ route('admin.subcategories.store') }}" method="POST">
+        <div class="card-body">
 
-                    @csrf
+            <form action="{{ route('admin.subcategories.store') }}"
+                  method="POST">
 
-                    <div class="form-group">
+                @csrf
 
-                        <label>
-                            Category
-                        </label>
+                <div class="form-group">
 
-                        <select name="category_id" class="form-control" required>
+                    <label>
+                        Category
+                    </label>
 
-                            <option value="">
-                                Select Category
+                    <select name="category_id"
+                            class="form-control"
+                            required>
+
+                        <option value="">
+                            Select Category
+                        </option>
+
+                        @foreach ($categories as $category)
+
+                            <option value="{{ $category->id }}"
+                                {{ old('category_id') == $category->id ? 'selected' : '' }}>
+
+                                {{ $category->section->name ?? 'No Section' }}
+                                →
+                                {{ $category->name }}
+
                             </option>
 
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}">
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
+                        @endforeach
 
-                        </select>
+                    </select>
 
-                    </div>
+                </div>
 
-                    <div class="form-group">
+                <div class="form-group">
 
-                        <label>
-                            Name
-                        </label>
+                    <label>
+                        Name
+                    </label>
 
-                        <input type="text" name="name" class="form-control" required>
+                    <input type="text"
+                           name="name"
+                           class="form-control"
+                           value="{{ old('name') }}"
+                           required>
 
-                    </div>
+                </div>
 
-                    <div class="form-group">
+                <div class="form-group">
 
-                        <label>
-                            Description
-                        </label>
+                    <label>
+                        Description
+                    </label>
 
-                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    <textarea name="description"
+                              class="form-control"
+                              rows="3">{{ old('description') }}</textarea>
 
-                    </div>
+                </div>
 
-                    <div class="form-group">
+                <div class="form-group">
 
-                        <label>
-                            Display Order
-                        </label>
+                    <label>
+                        Display Order
+                    </label>
 
-                        <input type="number" name="display_order" value="0" class="form-control">
+                    <input type="number"
+                           name="display_order"
+                           value="{{ old('display_order', 0) }}"
+                           class="form-control">
 
-                    </div>
+                </div>
 
-                    <div class="form-check mb-3">
+                <div class="form-check mb-3">
 
-                        <input type="checkbox" name="is_active" class="form-check-input" checked>
+                    <input type="checkbox"
+                           name="is_active"
+                           class="form-check-input"
+                           id="is_active"
+                           {{ old('is_active', true) ? 'checked' : '' }}>
 
-                        <label class="form-check-label">
-                            Active
-                        </label>
+                    <label class="form-check-label"
+                           for="is_active">
 
-                    </div>
+                        Active
 
-                    <button type="submit" class="btn btn-primary">
+                    </label>
 
-                        Save Subcategory
+                </div>
 
-                    </button>
+                <button type="submit"
+                        class="btn btn-primary">
 
-                </form>
+                    Save Subcategory
 
-            </div>
+                </button>
+
+            </form>
 
         </div>
 
     </div>
+
+</div>
 
 @endsection

@@ -28,10 +28,26 @@
                     </li>
 
                     <li class="nav-item">
+                        <a href="{{ route('admin.sections.index') }}"
+                            class="nav-link {{ request()->routeIs('admin.sections.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-layer-group"></i>
+                            <p>Sections</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a href="{{ route('admin.categories.index') }}"
                             class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-list"></i>
                             <p>Categories</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('admin.subcategories.index') }}"
+                            class="nav-link {{ request()->routeIs('admin.subcategories.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-stream"></i>
+                            <p>Subcategories</p>
                         </a>
                     </li>
 
@@ -86,12 +102,48 @@
                     </li>
 
                     <li class="nav-item">
+                        <a href="{{ route('admin.ingredients.index') }}"
+                            class="nav-link {{ request()->routeIs('admin.ingredients.*') ? 'active' : '' }}">
+
+                            <i class="nav-icon fas fa-boxes"></i>
+
+                            <p>
+                                Ingredients
+                            </p>
+
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a href="{{ route('admin.reports.top-selling-items') }}"
                             class="nav-link {{ request()->routeIs('admin.reports.top-selling-items') ? 'active' : '' }}">
 
                             <i class="nav-icon fas fa-trophy"></i>
 
                             <p>Top Selling Items</p>
+
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.low-stock') }}" class="nav-link">
+
+                            <i class="nav-icon fas fa-exclamation-triangle"></i>
+
+                            <p>
+                                Low Stock
+                            </p>
+
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.stock-movements') }}" class="nav-link">
+
+                            <i class="nav-icon fas fa-exchange-alt"></i>
+
+                            <p>
+                                Stock Movements
+                            </p>
 
                         </a>
                     </li>
@@ -117,6 +169,14 @@
                             class="nav-link {{ request()->routeIs('cashier.orders.index') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-cash-register"></i>
                             <p>Cashier</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('cashier.bills.index') }}"
+                            class="nav-link {{ request()->routeIs('cashier.bills.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                            <p>Bills</p>
                         </a>
                     </li>
 

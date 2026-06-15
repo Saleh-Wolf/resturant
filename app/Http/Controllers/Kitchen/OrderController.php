@@ -3,42 +3,78 @@
 namespace App\Http\Controllers\Kitchen;
 
 use App\Models\Order;
+use App\Services\InventoryService;
 use App\Http\Controllers\Controller;
+use RuntimeException;
 
 class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with([
+        $pendingOrders = Order::with([
             'table',
             'items.menuItem'
         ])
-        ->whereIn('status', [
-            'pending',
-            'preparing',
-            'ready'
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        $preparingOrders = Order::with([
+            'table',
+            'items.menuItem'
         ])
-        ->latest()
-        ->get();
+            ->where('status', 'preparing')
+            ->latest()
+            ->get();
+
+        $readyOrders = Order::with([
+            'table',
+            'items.menuItem'
+        ])
+            ->where('status', 'ready')
+            ->latest()
+            ->get();
 
         return view(
             'kitchen.orders.index',
-            compact('orders')
+            compact(
+                'pendingOrders',
+                'preparingOrders',
+                'readyOrders'
+            )
         );
     }
 
-    public function startPreparing(Order $order)
+    public function startPreparing(Order $order, InventoryService $inventoryService)
     {
-        $order->update([
-            'status' => 'preparing',
-        ]);
+        if ($order->status !== 'pending') {
+            return back()
+                ->with('error', 'Only pending orders can be started.');
+        }
 
-        return back()
-            ->with('success', 'Order is now preparing');
+        try {
+            $inventoryService->deductForOrder($order);
+
+            $order->update([
+                'status' => 'preparing',
+            ]);
+
+            return back()
+                ->with('success', 'Order is now preparing and stock has been deducted.');
+
+        } catch (RuntimeException $exception) {
+            return back()
+                ->with('error', $exception->getMessage());
+        }
     }
 
     public function markReady(Order $order)
     {
+        if ($order->status !== 'preparing') {
+            return back()
+                ->with('error', 'Only preparing orders can be marked as ready.');
+        }
+
         $order->update([
             'status' => 'ready',
         ]);

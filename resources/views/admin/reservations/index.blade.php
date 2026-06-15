@@ -4,191 +4,241 @@
 
 @section('content')
 
-<div class="container-fluid">
+    <div class="container-fluid">
 
-    <h1 class="mb-4">
-        Reservations
-    </h1>
+        <h1 class="mb-4">
+            Reservations
+        </h1>
 
-    @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        <div class="mb-3">
+            <a href="{{ route('admin.reservations.create') }}" class="btn btn-primary">
+
+                Create Reservation
+
+            </a>
         </div>
-    @endif
 
-    <div class="mb-3">
-        <a href="{{ route('admin.reservations.create') }}"
-           class="btn btn-primary">
+        <div class="card">
+            <div class="card-body table-responsive">
 
-            Create Reservation
+                <table class="table table-bordered table-striped">
 
-        </a>
-    </div>
-
-    <div class="card">
-        <div class="card-body table-responsive">
-
-            <table class="table table-bordered table-striped">
-
-                <thead>
-                    <tr>
-                        <th>Customer</th>
-                        <th>Phone</th>
-                        <th>Table</th>
-                        <th>Date & Time</th>
-                        <th>Guests</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    @forelse($reservations as $reservation)
-
+                    <thead>
                         <tr>
+                            <th>Reservation No.</th>
+                            <th>Type</th>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th>Table</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Duration</th>
+                            <th>Guests</th>
+                            <th>Occasion</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-                            <td>
-                                {{ $reservation->customer_name }}
-                            </td>
+                    <tbody>
 
-                            <td>
-                                {{ $reservation->customer_phone }}
-                            </td>
+                        @forelse($reservations as $reservation)
+                            <tr>
 
-                            <td>
-                                {{ $reservation->table->table_number }}
-                            </td>
+                                <td>
+                                    {{ $reservation->reservation_number ?? '-' }}
+                                </td>
 
-                            <td>
-                                {{ \Carbon\Carbon::parse($reservation->reservation_date)->format('Y-m-d H:i') }}
-                            </td>
-
-                            <td>
-                                {{ $reservation->guest_count }}
-                            </td>
-
-                            <td>
-
-                                @if($reservation->status === 'pending')
-
-                                    <span class="badge badge-warning">
-                                        Pending
+                                <td>
+                                    <span class="badge badge-secondary">
+                                        {{ ucfirst($reservation->reservation_type ?? '-') }}
                                     </span>
+                                </td>
 
-                                @elseif($reservation->status === 'confirmed')
+                                <td>
+                                    {{ $reservation->customer_name }}
+                                </td>
 
-                                    <span class="badge badge-success">
-                                        Confirmed
-                                    </span>
+                                <td>
+                                    {{ $reservation->customer_phone }}
+                                </td>
 
-                                @elseif($reservation->status === 'completed')
+                                <td>
+                                    {{ $reservation->table->table_number ?? '-' }}
+                                </td>
 
-                                    <span class="badge badge-info">
-                                        Completed
-                                    </span>
+                                <td>
+                                    {{ \Carbon\Carbon::parse($reservation->reservation_date)->format('Y-m-d') }}
+                                </td>
 
-                                @elseif($reservation->status === 'cancelled')
+                                <td>
+                                    {{ $reservation->reservation_time ?? '-' }}
+                                </td>
 
-                                    <span class="badge badge-danger">
-                                        Cancelled
-                                    </span>
+                                <td>
+                                    @if ($reservation->estimated_duration)
+                                        {{ $reservation->estimated_duration }} h
+                                    @else
+                                        -
+                                    @endif
+                                </td>
 
-                                @endif
+                                <td>
+                                    {{ $reservation->guest_count }}
+                                </td>
 
-                            </td>
+                                <td>
+                                    {{ $reservation->special_occasion ?? '-' }}
+                                </td>
 
-                            <td>
+                                <td>
 
-                                <div class="d-flex">
-
-                                    @if($reservation->status === 'pending')
-
-                                        <form action="{{ route('admin.reservations.confirm', $reservation) }}"
-                                              method="POST"
-                                              class="mr-1">
-
-                                            @csrf
-                                            @method('PATCH')
-
-                                            <button type="submit"
-                                                    class="btn btn-success btn-sm">
-
-                                                Confirm
-
-                                            </button>
-
-                                        </form>
-
-                                        <form action="{{ route('admin.reservations.cancel', $reservation) }}"
-                                              method="POST"
-                                              class="mr-1">
-
-                                            @csrf
-                                            @method('PATCH')
-
-                                            <button type="submit"
-                                                    class="btn btn-danger btn-sm">
-
-                                                Cancel
-
-                                            </button>
-
-                                        </form>
-
+                                    @if ($reservation->status === 'confirmed')
+                                        <span class="badge badge-success">
+                                            Confirmed
+                                        </span>
+                                    @elseif($reservation->status === 'arrived')
+                                        <span class="badge badge-primary">
+                                            Arrived
+                                        </span>
+                                    @elseif($reservation->status === 'completed')
+                                        <span class="badge badge-info">
+                                            Completed
+                                        </span>
+                                    @elseif($reservation->status === 'cancelled')
+                                        <span class="badge badge-danger">
+                                            Cancelled
+                                        </span>
+                                    @elseif($reservation->status === 'no_show')
+                                        <span class="badge badge-dark">
+                                            No Show
+                                        </span>
+                                    @else
+                                        <span class="badge badge-secondary">
+                                            {{ ucfirst($reservation->status) }}
+                                        </span>
                                     @endif
 
-                                    <a href="{{ route('admin.reservations.edit', $reservation) }}"
-                                       class="btn btn-warning btn-sm mr-1">
+                                </td>
 
-                                        Edit
+                                <td>
 
-                                    </a>
+                                    <div class="d-flex">
 
-                                    <form action="{{ route('admin.reservations.destroy', $reservation) }}"
-                                          method="POST"
-                                          onsubmit="return confirm('Delete this reservation?')">
+                                        @if ($reservation->status === 'confirmed')
+                                            <form action="{{ route('admin.reservations.arrived', $reservation) }}"
+                                                method="POST" class="mr-1">
 
-                                        @csrf
-                                        @method('DELETE')
+                                                @csrf
+                                                @method('PATCH')
 
-                                        <button type="submit"
-                                                class="btn btn-danger btn-sm">
+                                                <button type="submit" class="btn btn-primary btn-sm">
 
-                                            Delete
+                                                    Arrived
 
-                                        </button>
+                                                </button>
 
-                                    </form>
+                                            </form>
 
-                                </div>
+                                            <form action="{{ route('admin.reservations.no-show', $reservation) }}"
+                                                method="POST" class="mr-1">
 
-                            </td>
+                                                @csrf
+                                                @method('PATCH')
 
-                        </tr>
+                                                <button type="submit" class="btn btn-dark btn-sm">
 
-                    @empty
+                                                    No Show
 
-                        <tr>
-                            <td colspan="7"
-                                class="text-center">
+                                                </button>
 
-                                No reservations found
+                                            </form>
 
-                            </td>
-                        </tr>
+                                            <form action="{{ route('admin.reservations.cancel', $reservation) }}"
+                                                method="POST" class="mr-1">
 
-                    @endforelse
+                                                @csrf
+                                                @method('PATCH')
 
-                </tbody>
+                                                <button type="submit" class="btn btn-danger btn-sm">
 
-            </table>
+                                                    Cancel
 
-            {{ $reservations->links() }}
+                                                </button>
 
+                                            </form>
+                                        @endif
+
+                                        @if ($reservation->status === 'arrived' && !$reservation->order)
+                                            <a href="{{ route('waiter.orders.create', [
+                                                'reservation_id' => $reservation->id,
+                                            ]) }}"
+                                                class="btn btn-success btn-sm mr-1">
+
+                                                Create Order
+
+                                            </a>
+                                        @endif
+
+                                        <a href="{{ route('admin.reservations.edit', $reservation) }}"
+                                            class="btn btn-warning btn-sm mr-1">
+
+                                            Edit
+
+                                        </a>
+
+                                        <form action="{{ route('admin.reservations.destroy', $reservation) }}"
+                                            method="POST" onsubmit="return confirm('Delete this reservation?')">
+
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button type="submit" class="btn btn-danger btn-sm">
+
+                                                Delete
+
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+                                <td colspan="12" class="text-center">
+
+                                    No reservations found
+
+                                </td>
+                            </tr>
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
+                {{ $reservations->links() }}
+
+            </div>
         </div>
-    </div>
 
-</div>
+    </div>
 
 @endsection

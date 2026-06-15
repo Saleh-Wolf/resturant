@@ -2,14 +2,34 @@
 
 namespace App\Http\Controllers\Cashier;
 
+use App\Models\Order;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 
 class BillingController extends Controller
 {
-    //
     public function index()
     {
-         return view('cashier.dashboard');
+        $readyOrders = Order::with([
+            'table',
+            'waiter',
+            'items.menuItem',
+            'items.offer',
+        ])
+            ->where('status', 'ready')
+            ->latest()
+            ->get();
+
+        $pendingBillsCount = $readyOrders->count();
+
+        $todayRevenue = 0;
+
+        return view(
+            'cashier.dashboard',
+            compact(
+                'readyOrders',
+                'pendingBillsCount',
+                'todayRevenue'
+            )
+        );
     }
 }

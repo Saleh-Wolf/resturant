@@ -4,79 +4,80 @@
 
 @section('content')
 
-<div class="container-fluid">
+    <div class="container-fluid">
 
-    <h1 class="mb-4">
-        Order History
-    </h1>
+        <h1 class="mb-4">
+            Order History
+        </h1>
 
-    <div class="card">
-        <div class="card-body table-responsive">
+        <div class="card">
+            <div class="card-body table-responsive">
 
-            <table class="table table-bordered table-striped">
+                <table class="table table-bordered table-striped">
 
-                <thead>
-                    <tr>
-                        <th>Order #</th>
-                        <th>Table</th>
-                        <th>Waiter</th>
-                        <th>Total</th>
-                        <th>Completed At</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    @forelse($orders as $order)
-
+                    <thead>
                         <tr>
-
-                            <td>
-                                #{{ $order->id }}
-                            </td>
-
-                            <td>
-                                {{ $order->table->table_number }}
-                            </td>
-
-                            <td>
-                                {{ $order->waiter->name }}
-                            </td>
-
-                            <td>
-                                {{ number_format($order->total, 2) }} EGP
-                            </td>
-
-                            <td>
-                                {{ $order->updated_at->format('Y-m-d H:i') }}
-                            </td>
-
+                            <th>Order #</th>
+                            <th>Table</th>
+                            <th>Waiter</th>
+                            <th>Total</th>
+                            <th>Completed At</th>
                         </tr>
+                    </thead>
 
-                    @empty
+                    <tbody>
 
-                        <tr>
+                        @forelse($orders as $order)
+                            <tr>
 
-                            <td colspan="5"
-                                class="text-center">
+                                <td>
+                                    #{{ $order->id }}
+                                </td>
 
-                                No completed orders found
+                                <td>
+                                    @if ($order->order_type === 'takeaway')
+                                        <span class="badge badge-info">Takeaway</span>
+                                    @else
+                                        {{ $order->table->table_number ?? '-' }}
+                                    @endif
+                                </td>
 
-                            </td>
+                                <td>
+                                    {{ $order->waiter->name }}
+                                </td>
 
-                        </tr>
+                                <td>
+                                    {{ number_format($order->total, 2) }} EGP
+                                </td>
 
-                    @endforelse
+                                <td>
+                                    {{ $order->updated_at->format('Y-m-d H:i') }}
+                                </td>
 
-                </tbody>
+                            </tr>
 
-            </table>
+                        @empty
 
-            {{ $orders->links() }}
+                            <tr>
 
+                                <td colspan="5" class="text-center">
+
+                                    No completed orders found
+
+                                </td>
+
+                            </tr>
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
+                {{ $orders->links() }}
+
+            </div>
         </div>
-    </div>
 
-</div>
+    </div>
 
 @endsection

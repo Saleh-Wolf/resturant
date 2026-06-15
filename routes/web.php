@@ -11,14 +11,17 @@ use App\Http\Controllers\Admin\SubcategoryController;
 use App\Http\Controllers\Admin\TableController;
 use App\Http\Controllers\Admin\ReservationController;
 use App\Http\Controllers\Waiter\OrderController;
-use App\Http\Controllers\Cashier\BillingController;
+//use App\Http\Controllers\Cashier\BillingController;
 use App\Http\Controllers\Cashier\OrderController as CashierOrderController;
-use App\Http\Controllers\Kitchen\KitchenController;
+ use App\Http\Controllers\Kitchen\KitchenController;
 use App\Http\Controllers\PublicMenuController;
 use App\Http\Controllers\Admin\MenuItemController;
+use App\Http\Controllers\Admin\MenuItemIngredientController;
 use App\Http\Controllers\Kitchen\OrderController as KitchenOrderController;
 use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\Admin\IngredientController;
+use App\Http\Controllers\Cashier\BillController;
 
 Route::get('/', function () {
 
@@ -56,6 +59,19 @@ Route::get('/admin/dashboard', [DashboardController::class, 'index'])
 Route::get('/admin/users', [UserController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.users.index');
+
+
+        // Menu Item Ingredient Routes
+
+Route::get('/admin/menu-items/{menuItem}/ingredients',
+    [MenuItemIngredientController::class, 'edit'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.menu-items.ingredients.edit');
+
+Route::put('/admin/menu-items/{menuItem}/ingredients',
+    [MenuItemIngredientController::class, 'update'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.menu-items.ingredients.update');
 
         //offers routes
 Route::get('/admin/offers', [OfferController::class, 'index'])
@@ -171,6 +187,12 @@ Route::patch('/kitchen/orders/{order}/ready', [KitchenOrderController::class, 'm
     ->middleware(['auth', 'role:kitchen_staff'])
     ->name('kitchen.orders.ready');
 
+    Route::get('/kitchen', function () {
+    return redirect()->route('kitchen.orders.index');
+})
+    ->middleware(['auth', 'role:kitchen_staff'])
+    ->name('kitchen.dashboard');
+
 // Cashier Routes
 Route::get('/cashier/dashboard', function () {
     return redirect()->route('cashier.orders.index');
@@ -178,9 +200,7 @@ Route::get('/cashier/dashboard', function () {
     ->middleware(['auth', 'role:cashier'])
     ->name('cashier.dashboard');
 
-Route::get('/kitchen', [KitchenController::class, 'index'])
-    ->middleware(['auth', 'role:kitchen_staff'])
-    ->name('kitchen.dashboard');
+
 
 // Cashier Orders Routes
 Route::get('/cashier/orders', [CashierOrderController::class, 'index'])
@@ -196,6 +216,24 @@ Route::patch('/cashier/orders/{order}/complete', [CashierOrderController::class,
 Route::get('/cashier/orders/history', [CashierOrderController::class, 'history'])
     ->middleware(['auth', 'role:cashier'])
     ->name('cashier.orders.history');
+
+        // Cashier Bills Routes
+
+//     Route::get('/cashier/bills', [BillingController::class, 'index'])
+//     ->middleware(['auth', 'role:cashier'])
+//     ->name('cashier.bills.index');
+// Route::get('/cashier/bills/{bill}', [BillingController::class, 'show'])
+//     ->middleware(['auth', 'role:cashier'])
+//     ->name('cashier.bills.show');
+
+                // Admin Bill Routes
+    Route::get('/cashier/bills', [BillController::class, 'index'])
+    ->middleware(['auth', 'role:cashier'])
+    ->name('cashier.bills.index');
+
+Route::get('/cashier/bills/{bill}', [BillController::class, 'show'])
+    ->middleware(['auth', 'role:cashier'])
+    ->name('cashier.bills.show');
 
 
 // User Management Routes
@@ -327,6 +365,19 @@ Route::patch('/admin/reservations/{reservation}/cancel',
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reservations.cancel');
 
+
+Route::patch('/admin/reservations/{reservation}/arrived',
+    [ReservationController::class, 'arrived'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reservations.arrived');
+
+Route::patch('/admin/reservations/{reservation}/no-show',
+    [ReservationController::class, 'noShow'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reservations.no-show');
+
+
+
     Route::get('/admin/reservations/{reservation}/edit', [ReservationController::class, 'edit'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reservations.edit');
@@ -361,5 +412,49 @@ Route::get('/admin/subcategories/create', [SubcategoryController::class, 'create
     Route::post('/admin/subcategories', [SubcategoryController::class, 'store'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.subcategories.store');
+
+    Route::get('/admin/subcategories/{subcategory}/edit', [SubcategoryController::class, 'edit'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.subcategories.edit');
+
+Route::put('/admin/subcategories/{subcategory}', [SubcategoryController::class, 'update'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.subcategories.update');
+
+Route::delete('/admin/subcategories/{subcategory}', [SubcategoryController::class, 'destroy'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.subcategories.destroy');
+
+            // Ingredient Routes
+Route::resource('admin/ingredients', IngredientController::class)
+    ->middleware(['auth', 'role:admin'])
+    ->names('admin.ingredients');
+
+
+
+            //stock report route
+        
+    Route::get('/admin/reports/low-stock',
+    [ReportController::class, 'lowStock'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.low-stock');
+
+
+    Route::get('/admin/reports/stock-movements',
+    [ReportController::class, 'stockMovements'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.stock-movements');
+
+            // Ingredient Restock Routes
+
+    Route::get('/admin/ingredients/{ingredient}/restock',
+    [IngredientController::class, 'restock'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.ingredients.restock');
+
+    Route::post('/admin/ingredients/{ingredient}/restock',
+    [IngredientController::class, 'storeRestock'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.ingredients.store-restock');
 
 require __DIR__ . '/auth.php';

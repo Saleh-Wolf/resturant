@@ -7,39 +7,46 @@ use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Http\Controllers\Controller;
 use App\Models\OrderItem;
+use App\Models\Bill;
+use App\Models\Ingredient;
+use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
     public function sales(Request $request)
     {
-        $query = Order::with(['table', 'waiter'])
-            ->where('status', 'completed');
+        $query = Bill::with([
+            'order.table',
+            'order.waiter',
+            'cashier',
+        ])
+            ->where('payment_status', 'paid');
 
         if ($request->filled('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
+            $query->whereDate('paid_at', '>=', $request->from_date);
         }
 
         if ($request->filled('to_date')) {
-            $query->whereDate('created_at', '<=', $request->to_date);
+            $query->whereDate('paid_at', '<=', $request->to_date);
         }
 
-        $orders = $query
+        $bills = $query
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        $summaryQuery = Order::where('status', 'completed');
+        $summaryQuery = Bill::where('payment_status', 'paid');
 
         if ($request->filled('from_date')) {
-            $summaryQuery->whereDate('created_at', '>=', $request->from_date);
+            $summaryQuery->whereDate('paid_at', '>=', $request->from_date);
         }
 
         if ($request->filled('to_date')) {
-            $summaryQuery->whereDate('created_at', '<=', $request->to_date);
+            $summaryQuery->whereDate('paid_at', '<=', $request->to_date);
         }
 
-        $totalSales = $summaryQuery->sum('total');
+        $totalSales = $summaryQuery->sum('grand_total');
 
         $completedOrdersCount = $summaryQuery->count();
 
@@ -47,13 +54,26 @@ class ReportController extends Controller
             ? $totalSales / $completedOrdersCount
             : 0;
 
+        $totalDiscount = $summaryQuery->sum('discount_total');
+
+        $cashSales = (clone $summaryQuery)
+            ->where('payment_method', 'cash')
+            ->sum('grand_total');
+
+        $cardSales = (clone $summaryQuery)
+            ->where('payment_method', 'card')
+            ->sum('grand_total');
+
         return view(
             'admin.reports.sales',
             compact(
-                'orders',
+                'bills',
                 'totalSales',
                 'completedOrdersCount',
-                'averageOrderValue'
+                'averageOrderValue',
+                'totalDiscount',
+                'cashSales',
+                'cardSales'
             )
         );
     }
@@ -61,7 +81,8 @@ class ReportController extends Controller
     {
         $query = Order::with([
             'table',
-            'waiter'
+            'waiter',
+            'bill'
         ]);
 
         if ($request->filled('status')) {
@@ -81,16 +102,12 @@ class ReportController extends Controller
             compact('orders')
         );
     }
-
     public function reservations(Request $request)
     {
         $query = Reservation::with('table');
 
         if ($request->filled('status')) {
-            $query->where(
-                'status',
-                $request->status
-            );
+            $query->where('status', $request->status);
         }
 
         $reservations = $query
@@ -98,16 +115,36 @@ class ReportController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $totalReservations = Reservation::count();
+
+        $confirmedReservations = Reservation::where('status', 'confirmed')->count();
+
+        $completedReservations = Reservation::where('status', 'completed')->count();
+
+        $cancelledReservations = Reservation::whereIn('status', [
+            'cancelled',
+            'no_show',
+        ])->count();
+
         return view(
             'admin.reports.reservations',
-            compact('reservations')
+            compact(
+                'reservations',
+                'totalReservations',
+                'confirmedReservations',
+                'completedReservations',
+                'cancelledReservations'
+            )
         );
     }
+
     public function topSellingItems()
     {
         $items = OrderItem::select(
             'menu_item_id',
-            DB::raw('SUM(quantity) as total_quantity')
+            DB::raw('SUM(quantity) as total_quantity'),
+            DB::raw('SUM(total_price) as total_revenue'),
+            DB::raw('AVG(unit_price) as average_price')
         )
             ->with('menuItem')
             ->groupBy('menu_item_id')
@@ -119,4 +156,28 @@ class ReportController extends Controller
             compact('items')
         );
     }
+
+    public function lowStock()
+{
+    $ingredients = Ingredient::orderBy('name')
+        ->paginate(15);
+
+    return view(
+        'admin.reports.low-stock',
+        compact('ingredients')
+    );
+}
+
+    public function stockMovements()
+{
+    $movements = StockMovement::with('ingredient')
+        ->latest()
+        ->paginate(20);
+
+    return view(
+        'admin.reports.stock-movements',
+        compact('movements')
+    );
+}
+
 }
