@@ -9,29 +9,43 @@ use App\Http\Controllers\Controller;
 
 class ReservationController extends Controller
 {
-    public function index()
-    {
-        $reservations = Reservation::with([
-            'table',
-            'order'
-        ])
-            ->latest()
-            ->paginate(10);
+   public function index(Request $request)
+{
+    $query = Reservation::with([
+        'table',
+        'order'
+    ]);
 
-        return view(
-            'admin.reservations.index',
-            compact('reservations')
-        );
+    if ($request->filled('search')) {
+        $query->where(function ($q) use ($request) {
+            $q->where('customer_name', 'like', '%' . $request->search . '%')
+                ->orWhere('customer_phone', 'like', '%' . $request->search . '%')
+                ->orWhere('reservation_number', 'like', '%' . $request->search . '%');
+        });
     }
-    public function create()
-    {
-        $tables = RestaurantTable::all();
 
-        return view(
-            'admin.reservations.create',
-            compact('tables')
-        );
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
     }
+
+    if ($request->filled('reservation_type')) {
+        $query->where('reservation_type', $request->reservation_type);
+    }
+
+    if ($request->filled('date')) {
+        $query->whereDate('reservation_date', $request->date);
+    }
+
+    $reservations = $query
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
+
+    return view(
+        'admin.reservations.index',
+        compact('reservations')
+    );
+}
 
     public function store(Request $request)
     {
@@ -209,4 +223,17 @@ class ReservationController extends Controller
             ->route('admin.reservations.index')
             ->with('success', 'Reservation deleted successfully');
     }
+
+    public function show(Reservation $reservation)
+{
+    $reservation->load([
+        'table',
+        'order',
+    ]);
+
+    return view(
+        'admin.reservations.show',
+        compact('reservation')
+    );
+}
 }

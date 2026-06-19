@@ -67,6 +67,27 @@ class OrderController extends Controller
                 'in:dine_in,takeaway',
             ],
 
+            'customer_name' => [
+                'nullable',
+                'required_without:reservation_id',
+                'string',
+                'max:255',
+            ],
+
+            'customer_phone' => [
+                'nullable',
+                'required_without:reservation_id',
+                'string',
+                'max:20',
+            ],
+
+            'guest_count' => [
+                'nullable',
+                'required_without:reservation_id',
+                'integer',
+                'min:1',
+            ],
+
             'restaurant_table_id' => [
                 'nullable',
                 'required_if:order_type,dine_in',
@@ -78,6 +99,15 @@ class OrderController extends Controller
                 'array',
             ],
         ]);
+
+        if (!empty($validated['reservation_id'])) {
+            $reservation = Reservation::findOrFail($validated['reservation_id']);
+
+            $validated['order_type'] = 'dine_in';
+            $validated['customer_name'] = $reservation->customer_name;
+            $validated['customer_phone'] = $reservation->customer_phone;
+            $validated['guest_count'] = $reservation->guest_count;
+        }
 
         if (!empty($validated['reservation_id'])) {
             $validated['order_type'] = 'dine_in';
@@ -99,12 +129,15 @@ class OrderController extends Controller
             $order = Order::create([
                 'reservation_id' => $validated['reservation_id'] ?? null,
                 'order_type' => $validated['order_type'],
+                'customer_name' => $validated['customer_name'] ?? null,
+                'customer_phone' => $validated['customer_phone'] ?? null,
+                'guest_count' => $validated['guest_count'] ?? null,
                 'restaurant_table_id' => $validated['restaurant_table_id'] ?? null,
                 'user_id' => Auth::id(),
                 'status' => 'pending',
                 'subtotal' => 0,
                 'total' => 0,
-            ]);
+            ]);;
 
             $subtotal = 0;
 

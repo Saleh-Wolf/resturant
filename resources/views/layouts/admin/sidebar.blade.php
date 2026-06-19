@@ -102,6 +102,25 @@
                     </li>
 
                     <li class="nav-item">
+                        <a href="{{ route('admin.reports.table-utilization') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.table-utilization') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-chair"></i>
+                            <p>Table Utilization</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.offers-performance') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.offers-performance') ? 'active' : '' }}">
+
+                            <i class="nav-icon fas fa-tags"></i>
+
+                            <p>Offers Performance</p>
+
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a href="{{ route('admin.ingredients.index') }}"
                             class="nav-link {{ request()->routeIs('admin.ingredients.*') ? 'active' : '' }}">
 

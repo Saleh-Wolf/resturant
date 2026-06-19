@@ -41,59 +41,85 @@
                     {{ $reservation->guest_count }}
                 </div>
             @endif
-           <div class="form-group">
+            <div class="form-group">
 
-    <label>Order Type</label>
+                <label>Order Type</label>
 
-    <select name="order_type"
-            id="orderType"
-            class="form-control"
-            required>
+                <select name="order_type" id="orderType" class="form-control" required>
 
-        <option value="dine_in"
-            {{ isset($reservation) && $reservation ? 'selected' : '' }}>
-            Dine In
-        </option>
+                    <option value="dine_in" {{ isset($reservation) && $reservation ? 'selected' : '' }}>
+                        Dine In
+                    </option>
 
-        <option value="takeaway">
-            Takeaway
-        </option>
+                    <option value="takeaway">
+                        Takeaway
+                    </option>
 
-    </select>
+                </select>
 
-</div>
+            </div>
+            @if (!isset($reservation) || !$reservation)
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            Customer Information
+                        </h3>
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="form-group">
+                            <label>Customer Name</label>
+
+                            <input type="text" name="customer_name" class="form-control"
+                                value="{{ old('customer_name') }}" placeholder="Enter customer name">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phone Number</label>
+
+                            <input type="text" name="customer_phone" class="form-control"
+                                value="{{ old('customer_phone') }}" placeholder="Enter phone number">
+                        </div>
+
+                        <div class="form-group mb-0" id="guestCountSection">
+                            <label>Guests Count</label>
+
+                            <input type="number" name="guest_count" id="guestCountInput" class="form-control"
+                                value="{{ old('guest_count', 1) }}" min="1">
+                        </div>
+
+                    </div>
+                </div>
+            @endif
 
 
 
 
+            <div class="form-group" id="tableSection">
 
-           <div class="form-group" id="tableSection">
+                <label>Table</label>
 
-    <label>Table</label>
+                <select name="restaurant_table_id" id="restaurantTableSelect" class="form-control">
 
-    <select name="restaurant_table_id"
-            id="restaurantTableSelect"
-            class="form-control">
+                    <option value="">
+                        Select Table
+                    </option>
 
-        <option value="">
-            Select Table
-        </option>
+                    @foreach ($tables as $table)
+                        <option value="{{ $table->id }}"
+                            {{ isset($reservation) && $reservation && $reservation->restaurant_table_id == $table->id ? 'selected' : '' }}>
 
-        @foreach ($tables as $table)
-            <option value="{{ $table->id }}"
-                {{ isset($reservation) && $reservation && $reservation->restaurant_table_id == $table->id ? 'selected' : '' }}>
+                            {{ $table->table_number }}
+                            -
+                            {{ ucfirst($table->type) }}
+                            ({{ $table->min_capacity }} - {{ $table->max_capacity }} persons)
+                        </option>
+                    @endforeach
 
-                {{ $table->table_number }}
-                -
-                {{ ucfirst($table->type) }}
-                ({{ $table->min_capacity }} - {{ $table->max_capacity }} persons)
+                </select>
 
-            </option>
-        @endforeach
-
-    </select>
-
-</div>
+            </div>
 
 
 
@@ -258,149 +284,163 @@
 
     </div>
 
- <script>
-    const searchInput = document.getElementById('menuSearch');
-    const clearSearchButton = document.getElementById('clearSearch');
-    const suggestionsBox = document.getElementById('suggestions');
-    const itemCards = document.querySelectorAll('.menu-item-card');
-    const quantityInputs = document.querySelectorAll('.quantity-input');
+    <script>
+        const searchInput = document.getElementById('menuSearch');
+        const clearSearchButton = document.getElementById('clearSearch');
+        const suggestionsBox = document.getElementById('suggestions');
+        const itemCards = document.querySelectorAll('.menu-item-card');
+        const quantityInputs = document.querySelectorAll('.quantity-input');
 
-    const summaryItems = document.getElementById('summaryItems');
-    const summarySubtotal = document.getElementById('summarySubtotal');
-    const summaryDiscount = document.getElementById('summaryDiscount');
-    const summaryTotal = document.getElementById('summaryTotal');
+        const summaryItems = document.getElementById('summaryItems');
+        const summarySubtotal = document.getElementById('summarySubtotal');
+        const summaryDiscount = document.getElementById('summaryDiscount');
+        const summaryTotal = document.getElementById('summaryTotal');
 
-    const orderType = document.getElementById('orderType');
-    const tableSection = document.getElementById('tableSection');
-    const restaurantTableSelect = document.getElementById('restaurantTableSelect');
+        const orderType = document.getElementById('orderType');
+        const tableSection = document.getElementById('tableSection');
+        const restaurantTableSelect = document.getElementById('restaurantTableSelect');
 
-    function formatMoney(value) {
-        return Number(value).toFixed(2) + ' EGP';
-    }
+        const guestCountSection = document.getElementById('guestCountSection');
+        const guestCountInput = document.getElementById('guestCountInput');
 
-    function resetSearch() {
-        searchInput.value = '';
-        suggestionsBox.innerHTML = '';
-        suggestionsBox.style.display = 'none';
-
-        itemCards.forEach(function(card) {
-            card.style.display = 'block';
-        });
-    }
-
-    function updateOrderSummary() {
-        let selectedItems = 0;
-        let subtotal = 0;
-        let discountTotal = 0;
-        let finalTotal = 0;
-
-        itemCards.forEach(function(card) {
-            const quantityInput = card.querySelector('.quantity-input');
-            const quantity = parseInt(quantityInput.value) || 0;
-
-            if (quantity > 0) {
-                selectedItems += quantity;
-
-                const originalPrice = parseFloat(card.dataset.originalPrice) || 0;
-                const unitPrice = parseFloat(card.dataset.unitPrice) || 0;
-                const discount = parseFloat(card.dataset.discount) || 0;
-
-                subtotal += originalPrice * quantity;
-                discountTotal += discount * quantity;
-                finalTotal += unitPrice * quantity;
-            }
-        });
-
-        summaryItems.textContent = selectedItems;
-        summarySubtotal.textContent = formatMoney(subtotal);
-        summaryDiscount.textContent = formatMoney(discountTotal);
-        summaryTotal.textContent = formatMoney(finalTotal);
-    }
-
-    function toggleTableSection() {
-        if (orderType.value === 'takeaway') {
-            tableSection.style.display = 'none';
-            restaurantTableSelect.removeAttribute('required');
-            restaurantTableSelect.value = '';
-        } else {
-            tableSection.style.display = 'block';
-            restaurantTableSelect.setAttribute('required', 'required');
-        }
-    }
-
-    searchInput.addEventListener('input', function() {
-        const searchValue = this.value.toLowerCase().trim();
-
-        suggestionsBox.innerHTML = '';
-
-        if (searchValue === '') {
-            resetSearch();
-            return;
+        function formatMoney(value) {
+            return Number(value).toFixed(2) + ' EGP';
         }
 
-        let matches = 0;
+        function resetSearch() {
+            searchInput.value = '';
+            suggestionsBox.innerHTML = '';
+            suggestionsBox.style.display = 'none';
 
-        itemCards.forEach(function(card) {
-            const itemName = card.dataset.name;
-
-            if (itemName.includes(searchValue)) {
+            itemCards.forEach(function(card) {
                 card.style.display = 'block';
-                matches++;
+            });
+        }
 
-                const suggestion = document.createElement('button');
-                suggestion.type = 'button';
-                suggestion.className = 'list-group-item list-group-item-action';
-                suggestion.textContent = card.querySelector('.menu-item-name').textContent.trim();
+        function updateOrderSummary() {
+            let selectedItems = 0;
+            let subtotal = 0;
+            let discountTotal = 0;
+            let finalTotal = 0;
 
-                suggestion.addEventListener('click', function() {
-                    searchInput.value = suggestion.textContent;
-                    suggestionsBox.style.display = 'none';
+            itemCards.forEach(function(card) {
+                const quantityInput = card.querySelector('.quantity-input');
+                const quantity = parseInt(quantityInput.value) || 0;
 
-                    itemCards.forEach(function(otherCard) {
-                        otherCard.style.display = 'none';
-                    });
+                if (quantity > 0) {
+                    selectedItems += quantity;
 
-                    card.style.display = 'block';
+                    const originalPrice = parseFloat(card.dataset.originalPrice) || 0;
+                    const unitPrice = parseFloat(card.dataset.unitPrice) || 0;
+                    const discount = parseFloat(card.dataset.discount) || 0;
 
-                    card.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
+                    subtotal += originalPrice * quantity;
+                    discountTotal += discount * quantity;
+                    finalTotal += unitPrice * quantity;
+                }
+            });
 
-                    const quantityInput = card.querySelector('.quantity-input');
+            summaryItems.textContent = selectedItems;
+            summarySubtotal.textContent = formatMoney(subtotal);
+            summaryDiscount.textContent = formatMoney(discountTotal);
+            summaryTotal.textContent = formatMoney(finalTotal);
+        }
 
-                    if (quantityInput) {
-                        quantityInput.focus();
-                    }
-                });
+        function toggleTableSection() {
+            if (orderType.value === 'takeaway') {
+                tableSection.style.display = 'none';
+                restaurantTableSelect.removeAttribute('required');
+                restaurantTableSelect.value = '';
 
-                suggestionsBox.appendChild(suggestion);
+                if (guestCountSection && guestCountInput) {
+                    guestCountSection.style.display = 'none';
+                    guestCountInput.removeAttribute('required');
+                    guestCountInput.value = 1;
+                }
             } else {
-                card.style.display = 'none';
+                tableSection.style.display = 'block';
+                restaurantTableSelect.setAttribute('required', 'required');
+
+                if (guestCountSection && guestCountInput) {
+                    guestCountSection.style.display = 'block';
+                    guestCountInput.setAttribute('required', 'required');
+                }
+            }
+        }
+
+        searchInput.addEventListener('input', function() {
+            const searchValue = this.value.toLowerCase().trim();
+
+            suggestionsBox.innerHTML = '';
+
+            if (searchValue === '') {
+                resetSearch();
+                return;
+            }
+
+            let matches = 0;
+
+            itemCards.forEach(function(card) {
+                const itemName = card.dataset.name;
+
+                if (itemName.includes(searchValue)) {
+                    card.style.display = 'block';
+                    matches++;
+
+                    const suggestion = document.createElement('button');
+                    suggestion.type = 'button';
+                    suggestion.className = 'list-group-item list-group-item-action';
+                    suggestion.textContent = card.querySelector('.menu-item-name').textContent.trim();
+
+                    suggestion.addEventListener('click', function() {
+                        searchInput.value = suggestion.textContent;
+                        suggestionsBox.style.display = 'none';
+
+                        itemCards.forEach(function(otherCard) {
+                            otherCard.style.display = 'none';
+                        });
+
+                        card.style.display = 'block';
+
+                        card.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+
+                        const quantityInput = card.querySelector('.quantity-input');
+
+                        if (quantityInput) {
+                            quantityInput.focus();
+                        }
+                    });
+
+                    suggestionsBox.appendChild(suggestion);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            suggestionsBox.style.display = 'block';
+
+            if (matches === 0) {
+                suggestionsBox.innerHTML =
+                    '<div class="list-group-item text-muted">No items found</div>';
             }
         });
 
-        suggestionsBox.style.display = 'block';
+        quantityInputs.forEach(function(input) {
+            input.addEventListener('input', updateOrderSummary);
+        });
 
-        if (matches === 0) {
-            suggestionsBox.innerHTML =
-                '<div class="list-group-item text-muted">No items found</div>';
-        }
-    });
+        clearSearchButton.addEventListener('click', function() {
+            resetSearch();
+            searchInput.focus();
+        });
 
-    quantityInputs.forEach(function(input) {
-        input.addEventListener('input', updateOrderSummary);
-    });
+        orderType.addEventListener('change', toggleTableSection);
 
-    clearSearchButton.addEventListener('click', function() {
-        resetSearch();
-        searchInput.focus();
-    });
-
-    orderType.addEventListener('change', toggleTableSection);
-
-    toggleTableSection();
-    updateOrderSummary();
-</script>
+        toggleTableSection();
+        updateOrderSummary();
+    </script>
 
 @endsection

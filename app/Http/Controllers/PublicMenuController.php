@@ -29,4 +29,27 @@ class PublicMenuController extends Controller
             )
         );
     }
+    public function show(string $table_number, string $token)
+{
+    $table = RestaurantTable::where('table_number', $table_number)
+        ->where('qr_token', $token)
+        ->firstOrFail();
+
+    $categories = Category::with([
+        'menuItems' => function ($query) {
+            $query->where('is_available', true)
+                ->with('offers');
+        }
+    ])->get();
+
+    return view(
+        'public.menu',
+        compact(
+            'table',
+            'categories'
+        )
+    );
+}
+
+
 }

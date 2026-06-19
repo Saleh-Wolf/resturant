@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Models\OrderItem;
 use App\Models\Bill;
 use App\Models\Ingredient;
+use App\Models\Offer;
+use App\Models\RestaurantTable;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 
@@ -138,6 +140,49 @@ class ReportController extends Controller
         );
     }
 
+
+    public function offersPerformance(Request $request)
+{
+    $offers = Offer::withCount('menuItems')
+        ->with([
+            'menuItems'
+        ])
+        ->get();
+
+    $offerStats = $offers->map(function ($offer) use ($request) {
+        $query = OrderItem::where('offer_id', $offer->id);
+
+        if ($request->filled('from_date')) {
+            $query->whereHas('order.bill', function ($q) use ($request) {
+                $q->whereDate('paid_at', '>=', $request->from_date);
+            });
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereHas('order.bill', function ($q) use ($request) {
+                $q->whereDate('paid_at', '<=', $request->to_date);
+            });
+        }
+
+        $timesUsed = $query->count();
+        $totalDiscount = $query->sum(DB::raw('discount_amount * quantity'));
+        $revenue = $query->sum('total_price');
+
+        return [
+            'offer' => $offer,
+            'items_count' => $offer->menu_items_count,
+            'times_used' => $timesUsed,
+            'total_discount' => $totalDiscount,
+            'revenue' => $revenue,
+        ];
+    });
+
+    return view(
+        'admin.reports.offers-performance',
+        compact('offerStats')
+    );
+}
+
     public function topSellingItems()
     {
         $items = OrderItem::select(
@@ -177,6 +222,22 @@ class ReportController extends Controller
     return view(
         'admin.reports.stock-movements',
         compact('movements')
+    );
+}
+
+public function tableUtilization(Request $request)
+{
+    $tables = RestaurantTable::withCount([
+        'orders',
+        'reservations',
+    ])
+        ->withSum('orders as revenue_generated', 'total')
+        ->orderBy('table_number')
+        ->paginate(15);
+
+    return view(
+        'admin.reports.table-utilization',
+        compact('tables')
     );
 }
 

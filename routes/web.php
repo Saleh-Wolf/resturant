@@ -129,6 +129,7 @@ Route::delete('/admin/sections/{section}', [SectionController::class, 'destroy']
 
 
 
+            //reports routes
 
 
 
@@ -147,10 +148,22 @@ Route::delete('/admin/sections/{section}', [SectionController::class, 'destroy']
     ->name('admin.reports.reservations');
 
 
+    Route::get('/admin/reports/offers-performance',
+    [ReportController::class, 'offersPerformance'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.offers-performance');
+
+
 
     Route::get('/admin/reports/top-selling-items', [ReportController::class, 'topSellingItems'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reports.top-selling-items');
+
+
+    Route::get('/admin/reports/table-utilization',
+    [ReportController::class, 'tableUtilization'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.table-utilization');
 
 
 // Waiter Routes
@@ -391,13 +404,21 @@ Route::delete('/admin/reservations/{reservation}', [ReservationController::class
     ->name('admin.reservations.destroy');
 
 
+
+Route::get(
+    '/admin/reservations/{reservation}',
+    [ReservationController::class, 'show']
+)->name('admin.reservations.show');
+
+
     // QR Code Route for Restaurant Tables
 
     Route::get('/admin/tables/{table}/qr', [TableController::class, 'qr'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.tables.qr');
 
-
+Route::get('/table/{table_number}/{token}', [PublicMenuController::class, 'show'])
+    ->name('public.table.menu');
 
             // Subcategory Routes
     Route::get('/admin/subcategories', [SubcategoryController::class, 'index'])
@@ -456,5 +477,14 @@ Route::resource('admin/ingredients', IngredientController::class)
     [IngredientController::class, 'storeRestock'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.ingredients.store-restock');
+
+
+
+
+
+
+
+
+
 
 require __DIR__ . '/auth.php';

@@ -66,54 +66,104 @@
 
                         <div class="card-body">
                             @forelse($orders as $order)
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <h4>Order #{{ $order->id }}</h4>
+                                @php
+    $minutesOld = $order->created_at->diffInMinutes(now());
 
-                                        <p>
-                                            @if ($order->order_type === 'takeaway')
-                                                <span class="badge badge-info">Takeaway</span>
-                                            @else
-                                                {{ $order->table->table_number ?? '-' }}
-                                            @endif
-                                        </p>
+    if ($minutesOld >= 25) {
+        $delayClass = 'border-danger';
+        $delayBadge = 'badge-danger';
+        $delayText = 'Delayed';
+    } elseif ($minutesOld >= 15) {
+        $delayClass = 'border-warning';
+        $delayBadge = 'badge-warning';
+        $delayText = 'Getting Old';
+    } else {
+        $delayClass = 'border-light';
+        $delayBadge = 'badge-success';
+        $delayText = 'Normal';
+    }
+@endphp
 
-                                        <p>
-                                            <strong>Created:</strong>
-                                            {{ $order->created_at->diffForHumans() }}
-                                        </p>
+<div class="card mb-3 {{ $delayClass }}">
+    <div class="card-body">
 
-                                        <ul>
-                                            @foreach ($order->items as $item)
-                                                <li>
-                                                    <strong>{{ $item->menuItem->name }}</strong>
-                                                    × {{ $item->quantity }}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">
+                Order #{{ $order->id }}
+            </h4>
 
-                                                    @if ($item->notes)
-                                                        <div class="text-danger">
-                                                            Note: {{ $item->notes }}
-                                                        </div>
-                                                    @endif
-                                                </li>
-                                            @endforeach
-                                        </ul>
+            <span class="badge {{ $delayBadge }}">
+                {{ $delayText }}
+            </span>
+        </div>
 
-                                        @if ($route && $button)
-                                            <form action="{{ route($route, $order) }}" method="POST">
-                                                @csrf
-                                                @method('PATCH')
+        <p class="mb-1">
+            <strong>Type:</strong>
 
-                                                <button class="btn btn-primary btn-block">
-                                                    {{ $button }}
-                                                </button>
-                                            </form>
-                                        @else
-                                            <span class="badge badge-success">
-                                                Ready for Cashier
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
+            @if ($order->order_type === 'takeaway')
+                <span class="badge badge-info">
+                    Takeaway
+                </span>
+            @else
+                <span class="badge badge-primary">
+                    Dine In
+                </span>
+            @endif
+        </p>
+
+        <p class="mb-1">
+            <strong>Table:</strong>
+
+            @if ($order->order_type === 'takeaway')
+                -
+            @else
+                {{ $order->table->table_number ?? '-' }}
+            @endif
+        </p>
+
+        <p class="mb-1">
+            <strong>Elapsed:</strong>
+            {{ $minutesOld }} minutes
+        </p>
+
+        <p class="mb-2 text-muted">
+            <strong>Created:</strong>
+            {{ $order->created_at->diffForHumans() }}
+        </p>
+
+        <ul class="pl-3">
+            @foreach ($order->items as $item)
+                <li class="mb-2">
+                    <strong>{{ $item->menuItem->name }}</strong>
+                    × {{ $item->quantity }}
+
+                    @if ($item->notes)
+                        <div class="text-danger font-weight-bold">
+                            Note: {{ $item->notes }}
+                        </div>
+                    @endif
+                </li>
+            @endforeach
+        </ul>
+
+        @if ($route && $button)
+            <form action="{{ route($route, $order) }}"
+                  method="POST">
+                @csrf
+                @method('PATCH')
+
+                <button class="btn btn-primary btn-block">
+                    {{ $button }}
+                </button>
+            </form>
+        @else
+            <span class="badge badge-success">
+                Ready for Cashier
+            </span>
+        @endif
+
+    </div>
+</div>
                             @empty
                                 <p class="text-muted">
                                     No orders.
