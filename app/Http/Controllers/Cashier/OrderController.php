@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Cashier;
 
 use App\Models\Bill;
 use App\Models\Order;
-use App\Models\RestaurantTable;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Services\BillingService;
 
 class OrderController extends Controller
 {
@@ -58,62 +58,29 @@ class OrderController extends Controller
         );
     }
 
-    public function complete(Order $order)
-    {
-        if ($order->bill) {
-            return back()
-                ->with('error', 'This order already has a bill.');
-        }
+    public function complete(
+        Order $order,
+        BillingService $billingService
+    ) {
+        try {
 
-        $order->load([
-            'items',
-            'table',
-            'waiter',
-        ]);
-
-        $subtotal = $order->items->sum(function ($item) {
-            return $item->original_unit_price * $item->quantity;
-        });
-
-        $discountTotal = $order->items->sum(function ($item) {
-            return $item->discount_amount * $item->quantity;
-        });
-
-        $taxAmount = 0;
-        $serviceCharge = 0;
-        $grandTotal = $order->total;
-
-        Bill::create([
-            'bill_number' => 'BILL-' . now()->format('Ymd') . '-' . strtoupper(substr(uniqid(), -4)),
-            'order_id' => $order->id,
-            'cashier_id' => Auth::id(),
-            'subtotal' => $subtotal,
-            'discount_total' => $discountTotal,
-            'tax_amount' => $taxAmount,
-            'service_charge' => $serviceCharge,
-            'grand_total' => $grandTotal,
-            'payment_method' => 'cash',
-            'amount_received' => $grandTotal,
-            'change_amount' => 0,
-            'payment_status' => 'paid',
-            'paid_at' => now(),
-        ]);
-
-        $order->update([
-            'status' => 'completed',
-        ]);
-
-        RestaurantTable::where(
-            'id',
-            $order->restaurant_table_id
-        )->update([
-            'status' => 'available',
-        ]);
-
-        return back()
-            ->with(
-                'success',
-                'Bill generated and order completed successfully'
+            $billingService->completeOrder(
+                $order,
+                Auth::id()
             );
+
+            return back()
+                ->with(
+                    'success',
+                    'Bill generated and order completed successfully'
+                );
+        } catch (\Exception $exception) {
+
+            return back()
+                ->with(
+                    'error',
+                    $exception->getMessage()
+                );
+        }
     }
 }

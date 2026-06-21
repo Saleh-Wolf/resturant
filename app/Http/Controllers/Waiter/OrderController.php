@@ -9,7 +9,10 @@ use App\Models\RestaurantTable;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Waiter\StoreOrderRequest;
+use App\Services\OrderService;
+use Exception;
+
 
 class OrderController extends Controller
 {
@@ -54,164 +57,28 @@ class OrderController extends Controller
         );
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'reservation_id' => [
-                'nullable',
-                'exists:reservations,id',
-            ],
-
-            'order_type' => [
-                'required',
-                'in:dine_in,takeaway',
-            ],
-
-            'customer_name' => [
-                'nullable',
-                'required_without:reservation_id',
-                'string',
-                'max:255',
-            ],
-
-            'customer_phone' => [
-                'nullable',
-                'required_without:reservation_id',
-                'string',
-                'max:20',
-            ],
-
-            'guest_count' => [
-                'nullable',
-                'required_without:reservation_id',
-                'integer',
-                'min:1',
-            ],
-
-            'restaurant_table_id' => [
-                'nullable',
-                'required_if:order_type,dine_in',
-                'exists:restaurant_tables,id',
-            ],
-
-            'items' => [
-                'required',
-                'array',
-            ],
-        ]);
-
-        if (!empty($validated['reservation_id'])) {
-            $reservation = Reservation::findOrFail($validated['reservation_id']);
-
-            $validated['order_type'] = 'dine_in';
-            $validated['customer_name'] = $reservation->customer_name;
-            $validated['customer_phone'] = $reservation->customer_phone;
-            $validated['guest_count'] = $reservation->guest_count;
-        }
-
-        if (!empty($validated['reservation_id'])) {
-            $validated['order_type'] = 'dine_in';
-        }
-
-        $selectedItems = collect($request->items)
-            ->filter(function ($item) {
-                return isset($item['quantity']) && (int) $item['quantity'] > 0;
-            });
-
-        if ($selectedItems->isEmpty()) {
-            return back()
-                ->withErrors(['items' => 'Please select at least one menu item.'])
-                ->withInput();
-        }
-
-        DB::transaction(function () use ($validated, $selectedItems) {
-
-            $order = Order::create([
-                'reservation_id' => $validated['reservation_id'] ?? null,
-                'order_type' => $validated['order_type'],
-                'customer_name' => $validated['customer_name'] ?? null,
-                'customer_phone' => $validated['customer_phone'] ?? null,
-                'guest_count' => $validated['guest_count'] ?? null,
-                'restaurant_table_id' => $validated['restaurant_table_id'] ?? null,
-                'user_id' => Auth::id(),
-                'status' => 'pending',
-                'subtotal' => 0,
-                'total' => 0,
-            ]);;
-
-            $subtotal = 0;
-
-            foreach ($selectedItems as $menuItemId => $itemData) {
-                $menuItem = MenuItem::findOrFail($menuItemId);
-
-                $quantity = (int) $itemData['quantity'];
-
-                $originalUnitPrice = $menuItem->price;
-                $unitPrice = $originalUnitPrice;
-                $discountAmount = 0;
-                $offerId = null;
-
-                $activeOffer = $menuItem->offers()
-                    ->where('is_active', true)
-                    ->whereDate('start_date', '<=', today())
-                    ->whereDate('end_date', '>=', today())
-                    ->first();
-
-                if ($activeOffer) {
-                    $offerId = $activeOffer->getKey();
-
-                    if ($activeOffer->discount_type === 'percentage') {
-                        $discountAmount = ($originalUnitPrice * $activeOffer->discount_value) / 100;
-                    } else {
-                        $discountAmount = $activeOffer->discount_value;
-                    }
-
-                    $discountAmount = min($discountAmount, $originalUnitPrice);
-
-                    $unitPrice = $originalUnitPrice - $discountAmount;
-                }
-
-                $totalPrice = $unitPrice * $quantity;
-
-                $order->items()->create([
-                    'menu_item_id' => $menuItem->getKey(),
-                    'offer_id' => $offerId,
-                    'quantity' => $quantity,
-                    'original_unit_price' => $originalUnitPrice,
-                    'unit_price' => $unitPrice,
-                    'discount_amount' => $discountAmount,
-                    'total_price' => $totalPrice,
-                    'notes' => $itemData['notes'] ?? null,
-                ]);
-
-                $subtotal += $totalPrice;
-            }
-
-            $order->update([
-                'subtotal' => $subtotal,
-                'total' => $subtotal,
-            ]);
-
-            if ($validated['order_type'] === 'dine_in' && !empty($validated['restaurant_table_id'])) {
-                RestaurantTable::where('id', $validated['restaurant_table_id'])
-                    ->update([
-                        'status' => 'occupied',
-                    ]);
-            }
-
-            if (!empty($validated['reservation_id'])) {
-                Reservation::where('id', $validated['reservation_id'])
-                    ->update([
-                        'status' => 'completed',
-                    ]);
-            }
-        });
+    public function store(
+    StoreOrderRequest $request,
+    OrderService $orderService
+) {
+    try {
+        $orderService->create(
+            $request->validated(),
+            Auth::id()
+        );
 
         return redirect()
             ->route('waiter.orders.index')
             ->with('success', 'Order created successfully');
-    }
 
+    } catch (Exception $exception) {
+        return back()
+            ->withErrors([
+                'items' => $exception->getMessage(),
+            ])
+            ->withInput();
+    }
+}
     public function show(Order $order)
     {
         $order->load([
