@@ -84,6 +84,14 @@
                     </li>
 
                     <li class="nav-item">
+                        <a href="{{ route('admin.reports.sales.monthly') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.sales.monthly') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-calendar-alt"></i>
+                            <p>Monthly Sales</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a href="{{ route('admin.reports.orders') }}"
                             class="nav-link {{ request()->routeIs('admin.reports.orders') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-receipt"></i>

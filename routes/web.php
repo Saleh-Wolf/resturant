@@ -137,6 +137,11 @@ Route::delete('/admin/sections/{section}', [SectionController::class, 'destroy']
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reports.sales');
 
+
+    Route::get('/admin/reports/sales/monthly', [ReportController::class, 'monthlySales'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.sales.monthly');
+
     Route::get('/admin/reports/orders', [ReportController::class, 'orders'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reports.orders');

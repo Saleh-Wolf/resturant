@@ -135,8 +135,15 @@
                                                 Void
                                             </button>
 
+
+                                            <a href="{{ route('cashier.bills.show', $bill) }}" target="_blank"
+                                                class="btn btn-secondary btn-sm">
+                                                Reprint
+                                            </a>
+
                                         </form>
                                     @endif
+
 
                                 </td>
                             </tr>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Models\Reservation;
 use App\Http\Controllers\Controller;
 use App\Models\OrderItem;
@@ -240,5 +241,89 @@ public function tableUtilization(Request $request)
         compact('tables')
     );
 }
+
+public function monthlySales(Request $request)
+{
+    $month = $request->input('month', now()->format('Y-m'));
+
+    $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
+    $endOfMonth = Carbon::parse($month . '-01')->endOfMonth();
+
+    $previousStart = $startOfMonth->copy()->subMonth()->startOfMonth();
+    $previousEnd = $startOfMonth->copy()->subMonth()->endOfMonth();
+
+    $billsQuery = Bill::where('payment_status', 'paid')
+        ->whereBetween('paid_at', [
+            $startOfMonth,
+            $endOfMonth,
+        ]);
+
+    $totalRevenue = (clone $billsQuery)->sum('grand_total');
+
+    $totalOrders = (clone $billsQuery)->count();
+
+    $averageOrderValue = $totalOrders > 0
+        ? $totalRevenue / $totalOrders
+        : 0;
+
+    $averageDailyRevenue = $totalRevenue / $startOfMonth->daysInMonth;
+
+    $previousRevenue = Bill::where('payment_status', 'paid')
+        ->whereBetween('paid_at', [
+            $previousStart,
+            $previousEnd,
+        ])
+        ->sum('grand_total');
+
+    $growthPercentage = $previousRevenue > 0
+        ? (($totalRevenue - $previousRevenue) / $previousRevenue) * 100
+        : 0;
+
+    $dailySales = Bill::selectRaw('DATE(paid_at) as date, SUM(grand_total) as revenue, COUNT(*) as orders_count')
+        ->where('payment_status', 'paid')
+        ->whereBetween('paid_at', [
+            $startOfMonth,
+            $endOfMonth,
+        ])
+        ->groupByRaw('DATE(paid_at)')
+        ->orderBy('date')
+        ->get();
+
+    $topItems = OrderItem::select(
+        'menu_item_id',
+        DB::raw('SUM(quantity) as total_quantity'),
+        DB::raw('SUM(total_price) as total_revenue')
+    )
+        ->whereHas('order.bill', function ($query) use ($startOfMonth, $endOfMonth) {
+            $query->where('payment_status', 'paid')
+                ->whereBetween('paid_at', [
+                    $startOfMonth,
+                    $endOfMonth,
+                ]);
+        })
+        ->with('menuItem')
+        ->groupBy('menu_item_id')
+        ->orderByDesc('total_quantity')
+        ->take(10)
+        ->get();
+
+    return view(
+        'admin.reports.monthly-sales',
+        compact(
+            'month',
+            'totalRevenue',
+            'totalOrders',
+            'averageOrderValue',
+            'averageDailyRevenue',
+            'previousRevenue',
+            'growthPercentage',
+            'dailySales',
+            'topItems'
+        )
+    );
+}
+
+
+
 
 }
