@@ -143,47 +143,68 @@ class ReportController extends Controller
 
 
     public function offersPerformance(Request $request)
-{
-    $offers = Offer::withCount('menuItems')
-        ->with([
-            'menuItems'
-        ])
-        ->get();
+    {
+        $offers = Offer::withCount('menuItems')
+            ->with([
+                'menuItems'
+            ])
+            ->get();
 
-    $offerStats = $offers->map(function ($offer) use ($request) {
-        $query = OrderItem::where('offer_id', $offer->id);
+        $offerStats = $offers->map(function ($offer) use ($request) {
+            $query = OrderItem::where('offer_id', $offer->id);
 
-        if ($request->filled('from_date')) {
-            $query->whereHas('order.bill', function ($q) use ($request) {
-                $q->whereDate('paid_at', '>=', $request->from_date);
-            });
+            if ($request->filled('from_date')) {
+                $query->whereHas('order.bill', function ($q) use ($request) {
+                    $q->whereDate('paid_at', '>=', $request->from_date);
+                });
+            }
+
+            if ($request->filled('to_date')) {
+                $query->whereHas('order.bill', function ($q) use ($request) {
+                    $q->whereDate('paid_at', '<=', $request->to_date);
+                });
+            }
+
+            $timesUsed = $query->count();
+            $totalDiscount = $query->sum(DB::raw('discount_amount * quantity'));
+            $revenue = $query->sum('total_price');
+
+            return [
+                'offer' => $offer,
+                'items_count' => $offer->menu_items_count,
+                'times_used' => $timesUsed,
+                'total_discount' => $totalDiscount,
+                'revenue' => $revenue,
+            ];
+        });
+
+        if ($request->input('sort') === 'usage') {
+            $offerStats = $offerStats->sortByDesc('times_used');
+        } elseif ($request->input('sort') === 'discount') {
+            $offerStats = $offerStats->sortByDesc('total_discount');
+        } elseif ($request->input('sort') === 'revenue') {
+            $offerStats = $offerStats->sortByDesc('revenue');
         }
 
-        if ($request->filled('to_date')) {
-            $query->whereHas('order.bill', function ($q) use ($request) {
-                $q->whereDate('paid_at', '<=', $request->to_date);
-            });
-        }
+        $totalUsage = $offerStats->sum('times_used');
 
-        $timesUsed = $query->count();
-        $totalDiscount = $query->sum(DB::raw('discount_amount * quantity'));
-        $revenue = $query->sum('total_price');
+        $totalDiscount = $offerStats->sum('total_discount');
 
-        return [
-            'offer' => $offer,
-            'items_count' => $offer->menu_items_count,
-            'times_used' => $timesUsed,
-            'total_discount' => $totalDiscount,
-            'revenue' => $revenue,
-        ];
-    });
+        $totalRevenue = $offerStats->sum('revenue');
 
-    return view(
-        'admin.reports.offers-performance',
-        compact('offerStats')
-    );
-}
+        $totalOffers = $offerStats->count();
 
+        return view(
+            'admin.reports.offers-performance',
+            compact(
+                'offerStats',
+                'totalUsage',
+                'totalDiscount',
+                'totalRevenue',
+                'totalOffers'
+            )
+        );
+    }
     public function topSellingItems()
     {
         $items = OrderItem::select(
@@ -204,126 +225,158 @@ class ReportController extends Controller
     }
 
     public function lowStock()
-{
-    $ingredients = Ingredient::orderBy('name')
-        ->paginate(15);
+    {
+        $ingredients = Ingredient::orderBy('name')
+            ->paginate(15);
 
-    return view(
-        'admin.reports.low-stock',
-        compact('ingredients')
-    );
-}
+        return view(
+            'admin.reports.low-stock',
+            compact('ingredients')
+        );
+    }
 
     public function stockMovements()
-{
-    $movements = StockMovement::with('ingredient')
-        ->latest()
-        ->paginate(20);
+    {
+        $movements = StockMovement::with('ingredient')
+            ->latest()
+            ->paginate(20);
 
-    return view(
-        'admin.reports.stock-movements',
-        compact('movements')
-    );
-}
+        return view(
+            'admin.reports.stock-movements',
+            compact('movements')
+        );
+    }
 
-public function tableUtilization(Request $request)
-{
-    $tables = RestaurantTable::withCount([
-        'orders',
-        'reservations',
-    ])
-        ->withSum('orders as revenue_generated', 'total')
-        ->orderBy('table_number')
-        ->paginate(15);
+    public function tableUtilization(Request $request)
+    {
+        $query = RestaurantTable::query();
 
-    return view(
-        'admin.reports.table-utilization',
-        compact('tables')
-    );
-}
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
 
-public function monthlySales(Request $request)
-{
-    $month = $request->input('month', now()->format('Y-m'));
+        $query->withCount([
+            'reservations',
 
-    $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
-    $endOfMonth = Carbon::parse($month . '-01')->endOfMonth();
+            'orders' => function ($orderQuery) use ($request) {
+                if ($request->filled('from_date')) {
+                    $orderQuery->whereDate('created_at', '>=', $request->from_date);
+                }
 
-    $previousStart = $startOfMonth->copy()->subMonth()->startOfMonth();
-    $previousEnd = $startOfMonth->copy()->subMonth()->endOfMonth();
-
-    $billsQuery = Bill::where('payment_status', 'paid')
-        ->whereBetween('paid_at', [
-            $startOfMonth,
-            $endOfMonth,
+                if ($request->filled('to_date')) {
+                    $orderQuery->whereDate('created_at', '<=', $request->to_date);
+                }
+            },
         ]);
 
-    $totalRevenue = (clone $billsQuery)->sum('grand_total');
+        $query->withSum([
+            'orders as revenue_generated' => function ($orderQuery) use ($request) {
+                if ($request->filled('from_date')) {
+                    $orderQuery->whereDate('created_at', '>=', $request->from_date);
+                }
 
-    $totalOrders = (clone $billsQuery)->count();
+                if ($request->filled('to_date')) {
+                    $orderQuery->whereDate('created_at', '<=', $request->to_date);
+                }
+            },
+        ], 'total');
 
-    $averageOrderValue = $totalOrders > 0
-        ? $totalRevenue / $totalOrders
-        : 0;
+        if ($request->input('sort') === 'revenue') {
+            $query->orderByDesc('revenue_generated');
+        } elseif ($request->input('sort') === 'orders') {
+            $query->orderByDesc('orders_count');
+        } else {
+            $query->orderBy('table_number');
+        }
 
-    $averageDailyRevenue = $totalRevenue / $startOfMonth->daysInMonth;
+        $tables = $query
+            ->paginate(15)
+            ->withQueryString();
 
-    $previousRevenue = Bill::where('payment_status', 'paid')
-        ->whereBetween('paid_at', [
-            $previousStart,
-            $previousEnd,
-        ])
-        ->sum('grand_total');
+        return view(
+            'admin.reports.table-utilization',
+            compact('tables')
+        );
+    }
 
-    $growthPercentage = $previousRevenue > 0
-        ? (($totalRevenue - $previousRevenue) / $previousRevenue) * 100
-        : 0;
+    public function monthlySales(Request $request)
+    {
+        $month = $request->input('month', now()->format('Y-m'));
 
-    $dailySales = Bill::selectRaw('DATE(paid_at) as date, SUM(grand_total) as revenue, COUNT(*) as orders_count')
-        ->where('payment_status', 'paid')
-        ->whereBetween('paid_at', [
-            $startOfMonth,
-            $endOfMonth,
-        ])
-        ->groupByRaw('DATE(paid_at)')
-        ->orderBy('date')
-        ->get();
+        $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
+        $endOfMonth = Carbon::parse($month . '-01')->endOfMonth();
 
-    $topItems = OrderItem::select(
-        'menu_item_id',
-        DB::raw('SUM(quantity) as total_quantity'),
-        DB::raw('SUM(total_price) as total_revenue')
-    )
-        ->whereHas('order.bill', function ($query) use ($startOfMonth, $endOfMonth) {
-            $query->where('payment_status', 'paid')
-                ->whereBetween('paid_at', [
-                    $startOfMonth,
-                    $endOfMonth,
-                ]);
-        })
-        ->with('menuItem')
-        ->groupBy('menu_item_id')
-        ->orderByDesc('total_quantity')
-        ->take(10)
-        ->get();
+        $previousStart = $startOfMonth->copy()->subMonth()->startOfMonth();
+        $previousEnd = $startOfMonth->copy()->subMonth()->endOfMonth();
 
-    return view(
-        'admin.reports.monthly-sales',
-        compact(
-            'month',
-            'totalRevenue',
-            'totalOrders',
-            'averageOrderValue',
-            'averageDailyRevenue',
-            'previousRevenue',
-            'growthPercentage',
-            'dailySales',
-            'topItems'
+        $billsQuery = Bill::where('payment_status', 'paid')
+            ->whereBetween('paid_at', [
+                $startOfMonth,
+                $endOfMonth,
+            ]);
+
+        $totalRevenue = (clone $billsQuery)->sum('grand_total');
+
+        $totalOrders = (clone $billsQuery)->count();
+
+        $averageOrderValue = $totalOrders > 0
+            ? $totalRevenue / $totalOrders
+            : 0;
+
+        $averageDailyRevenue = $totalRevenue / $startOfMonth->daysInMonth;
+
+        $previousRevenue = Bill::where('payment_status', 'paid')
+            ->whereBetween('paid_at', [
+                $previousStart,
+                $previousEnd,
+            ])
+            ->sum('grand_total');
+
+        $growthPercentage = $previousRevenue > 0
+            ? (($totalRevenue - $previousRevenue) / $previousRevenue) * 100
+            : 0;
+
+        $dailySales = Bill::selectRaw('DATE(paid_at) as date, SUM(grand_total) as revenue, COUNT(*) as orders_count')
+            ->where('payment_status', 'paid')
+            ->whereBetween('paid_at', [
+                $startOfMonth,
+                $endOfMonth,
+            ])
+            ->groupByRaw('DATE(paid_at)')
+            ->orderBy('date')
+            ->get();
+
+        $topItems = OrderItem::select(
+            'menu_item_id',
+            DB::raw('SUM(quantity) as total_quantity'),
+            DB::raw('SUM(total_price) as total_revenue')
         )
-    );
-}
+            ->whereHas('order.bill', function ($query) use ($startOfMonth, $endOfMonth) {
+                $query->where('payment_status', 'paid')
+                    ->whereBetween('paid_at', [
+                        $startOfMonth,
+                        $endOfMonth,
+                    ]);
+            })
+            ->with('menuItem')
+            ->groupBy('menu_item_id')
+            ->orderByDesc('total_quantity')
+            ->take(10)
+            ->get();
 
-
-
-
+        return view(
+            'admin.reports.monthly-sales',
+            compact(
+                'month',
+                'totalRevenue',
+                'totalOrders',
+                'averageOrderValue',
+                'averageDailyRevenue',
+                'previousRevenue',
+                'growthPercentage',
+                'dailySales',
+                'topItems'
+            )
+        );
+    }
 }
