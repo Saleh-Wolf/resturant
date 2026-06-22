@@ -67,4 +67,16 @@ class BillingService
             return $bill;
         });
     }
+    public function voidBill(Bill $bill): Bill
+    {
+        if ($bill->payment_status === 'cancelled') {
+            throw new \Exception('This bill is already cancelled.');
+        }
+
+        $bill->update([
+            'payment_status' => 'cancelled',
+        ]);
+
+        return $bill;
+    }
 }

@@ -239,10 +239,14 @@ Route::get('/cashier/orders/history', [CashierOrderController::class, 'history']
 //     ->middleware(['auth', 'role:cashier'])
 //     ->name('cashier.bills.show');
 
-                // Admin Bill Routes
+                // Cashier Bill Routes
     Route::get('/cashier/bills', [BillController::class, 'index'])
     ->middleware(['auth', 'role:cashier'])
     ->name('cashier.bills.index');
+
+    Route::patch('/cashier/bills/{bill}/void', [BillController::class, 'void'])
+    ->middleware(['auth', 'role:cashier'])
+    ->name('cashier.bills.void');
 
 Route::get('/cashier/bills/{bill}', [BillController::class, 'show'])
     ->middleware(['auth', 'role:cashier'])
