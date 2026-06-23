@@ -31,6 +31,11 @@
                     <a href="{{ route('admin.reports.sales.export.excel', request()->query()) }}" class="btn btn-success">
                         Export Excel
                     </a>
+
+
+                    <a href="{{ route('admin.reports.sales.export.pdf', request()->query()) }}" class="btn btn-danger">
+                        Export PDF
+                    </a>
                 </div>
             </div>
         </form>

@@ -17,6 +17,7 @@ use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 use App\Exports\SalesReportExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -393,5 +394,46 @@ class ReportController extends Controller
         ),
         'sales-report.xlsx'
     );
+}
+
+public function exportSalesPdf(Request $request)
+{
+    $query = Bill::with([
+        'order.table',
+        'order.waiter',
+        'cashier',
+    ])
+        ->where('payment_status', 'paid');
+
+    if ($request->filled('from_date')) {
+        $query->whereDate('paid_at', '>=', $request->from_date);
+    }
+
+    if ($request->filled('to_date')) {
+        $query->whereDate('paid_at', '<=', $request->to_date);
+    }
+
+    $bills = $query
+        ->latest()
+        ->get();
+
+    $totalSales = $bills->sum('grand_total');
+    $completedOrdersCount = $bills->count();
+
+    $averageOrderValue = $completedOrdersCount > 0
+        ? $totalSales / $completedOrdersCount
+        : 0;
+
+    $pdf = Pdf::loadView(
+        'admin.reports.exports.sales-pdf',
+        compact(
+            'bills',
+            'totalSales',
+            'completedOrdersCount',
+            'averageOrderValue'
+        )
+    );
+
+    return $pdf->download('sales-report.pdf');
 }
 }
