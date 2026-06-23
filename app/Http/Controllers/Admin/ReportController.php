@@ -15,6 +15,8 @@ use App\Models\Offer;
 use App\Models\RestaurantTable;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
+use App\Exports\SalesReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -380,4 +382,16 @@ class ReportController extends Controller
             )
         );
     }
+
+
+    public function exportSalesExcel(Request $request)
+{
+    return Excel::download(
+        new SalesReportExport(
+            $request->from_date,
+            $request->to_date
+        ),
+        'sales-report.xlsx'
+    );
+}
 }

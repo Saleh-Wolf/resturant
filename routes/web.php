@@ -138,6 +138,10 @@ Route::delete('/admin/sections/{section}', [SectionController::class, 'destroy']
     ->name('admin.reports.sales');
 
 
+    Route::get('/admin/reports/sales/export/excel', [ReportController::class, 'exportSalesExcel'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.sales.export.excel');
+
     Route::get('/admin/reports/sales/monthly', [ReportController::class, 'monthlySales'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reports.sales.monthly');
