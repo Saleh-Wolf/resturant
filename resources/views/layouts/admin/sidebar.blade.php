@@ -150,6 +150,13 @@
                             <p>Top Selling Items</p>
 
                         </a>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.popular-items') }}"
+                            class="nav-link {{ request()->routeIs('admin.reports.popular-items') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-chart-bar"></i>
+                            <p>Popular Items</p>
+                        </a>
+                    </li>
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('admin.reports.low-stock') }}" class="nav-link">

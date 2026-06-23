@@ -14,7 +14,9 @@ use App\Models\Ingredient;
 use App\Models\Offer;
 use App\Models\RestaurantTable;
 use App\Models\StockMovement;
+use App\Models\MenuItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 use App\Exports\SalesReportExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -436,4 +438,100 @@ public function exportSalesPdf(Request $request)
 
     return $pdf->download('sales-report.pdf');
 }
+
+
+
+public function popularItems(Request $request)
+{
+    $items = MenuItem::with([
+        'category',
+        'subcategory',
+    ])
+        ->withCount([
+            'orderItems as times_ordered' => function ($query) use ($request) {
+                $this->applyPopularItemsDateFilter($query, $request);
+            },
+        ])
+        ->withSum([
+            'orderItems as total_quantity_sold' => function ($query) use ($request) {
+                $this->applyPopularItemsDateFilter($query, $request);
+            },
+        ], 'quantity')
+        ->withSum([
+            'orderItems as revenue_generated' => function ($query) use ($request) {
+                $this->applyPopularItemsDateFilter($query, $request);
+            },
+        ], 'total_price');
+
+    if ($request->filled('category_id')) {
+        $items->where('category_id', $request->category_id);
+    }
+
+    if ($request->filled('subcategory_id')) {
+        $items->where('subcategory_id', $request->subcategory_id);
+    }
+
+    if ($request->input('sort') === 'orders') {
+        $items->orderByDesc('times_ordered');
+    } elseif ($request->input('sort') === 'quantity') {
+        $items->orderByDesc('total_quantity_sold');
+    } elseif ($request->input('sort') === 'revenue') {
+        $items->orderByDesc('revenue_generated');
+    } else {
+        $items->orderBy('name');
+    }
+
+    $items = $items
+        ->paginate(15)
+        ->withQueryString();
+
+    $totalRevenue = OrderItem::query()
+        ->when($request->filled('from_date') || $request->filled('to_date'), function ($query) use ($request) {
+            $this->applyPopularItemsDateFilter($query, $request);
+        })
+        ->sum('total_price');
+
+    $bestSellers = MenuItem::withSum('orderItems as total_quantity_sold', 'quantity')
+        ->orderByDesc('total_quantity_sold')
+        ->take(10)
+        ->get();
+
+    $slowMovingItems = MenuItem::withSum('orderItems as total_quantity_sold', 'quantity')
+        ->havingRaw('total_quantity_sold > 0')
+        ->orderBy('total_quantity_sold')
+        ->take(10)
+        ->get();
+
+    $neverOrderedItems = MenuItem::doesntHave('orderItems')
+        ->orderBy('name')
+        ->take(10)
+        ->get();
+
+    return view(
+        'admin.reports.popular-items',
+        compact(
+            'items',
+            'totalRevenue',
+            'bestSellers',
+            'slowMovingItems',
+            'neverOrderedItems'
+        )
+    );
+}
+
+private function applyPopularItemsDateFilter($query, Request $request): void
+{
+    $query->whereHas('order.bill', function ($billQuery) use ($request) {
+        $billQuery->where('payment_status', 'paid');
+
+        if ($request->filled('from_date')) {
+            $billQuery->whereDate('paid_at', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $billQuery->whereDate('paid_at', '<=', $request->to_date);
+        }
+    });
+}
+
 }

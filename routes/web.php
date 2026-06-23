@@ -180,6 +180,13 @@ Route::delete('/admin/sections/{section}', [SectionController::class, 'destroy']
     ->name('admin.reports.table-utilization');
 
 
+
+    Route::get('/admin/reports/popular-items',
+    [ReportController::class, 'popularItems'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.popular-items');
+
+
 // Waiter Routes
 Route::get('/waiter/dashboard', [OrderController::class, 'index'])
     ->middleware(['auth', 'role:waiter'])
