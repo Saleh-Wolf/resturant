@@ -18,6 +18,7 @@ use App\Models\MenuItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 use App\Exports\SalesReportExport;
+use App\Exports\OffersPerformanceExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -532,6 +533,54 @@ private function applyPopularItemsDateFilter($query, Request $request): void
             $billQuery->whereDate('paid_at', '<=', $request->to_date);
         }
     });
+}
+
+public function exportOffersPerformanceExcel(Request $request)
+{
+    return Excel::download(
+        new OffersPerformanceExport(
+            $request->from_date,
+            $request->to_date,
+            $request->sort
+        ),
+        'offers-performance-report.xlsx'
+    );
+}
+
+public function exportOffersPerformancePdf(Request $request)
+{
+    $offers = Offer::withCount('menuItems')->get();
+
+    $offerStats = $offers->map(function ($offer) use ($request) {
+        $query = OrderItem::where('offer_id', $offer->id);
+
+        if ($request->filled('from_date')) {
+            $query->whereHas('order.bill', function ($q) use ($request) {
+                $q->whereDate('paid_at', '>=', $request->from_date);
+            });
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereHas('order.bill', function ($q) use ($request) {
+                $q->whereDate('paid_at', '<=', $request->to_date);
+            });
+        }
+
+        return [
+            'offer' => $offer,
+            'items_count' => $offer->menu_items_count,
+            'times_used' => $query->count(),
+            'total_discount' => $query->sum(DB::raw('discount_amount * quantity')),
+            'revenue' => $query->sum('total_price'),
+        ];
+    });
+
+    $pdf = Pdf::loadView(
+        'admin.reports.exports.offers-performance-pdf',
+        compact('offerStats')
+    );
+
+    return $pdf->download('offers-performance-report.pdf');
 }
 
 }

@@ -47,7 +47,18 @@
                     <a href="{{ route('admin.reports.offers-performance') }}" class="btn btn-secondary">
                         Reset
                     </a>
+
+                    <a href="{{ route('admin.reports.offers-performance.export.excel', request()->query()) }}"
+                        class="btn btn-success ml-2">
+                        Export Excel
+                    </a>
+
+                    <a href="{{ route('admin.reports.offers-performance.export.pdf', request()->query()) }}"
+                        class="btn btn-danger ml-2">
+                        Export PDF
+                    </a>
                 </div>
+
 
             </div>
 

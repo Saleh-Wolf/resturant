@@ -186,6 +186,17 @@ Route::delete('/admin/sections/{section}', [SectionController::class, 'destroy']
     ->middleware(['auth', 'role:admin'])
     ->name('admin.reports.popular-items');
 
+    Route::get('/admin/reports/offers-performance/export/excel',
+    [ReportController::class, 'exportOffersPerformanceExcel'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.offers-performance.export.excel');
+
+
+    Route::get('/admin/reports/offers-performance/export/pdf',
+    [ReportController::class, 'exportOffersPerformancePdf'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.reports.offers-performance.export.pdf');
+
 
 // Waiter Routes
 Route::get('/waiter/dashboard', [OrderController::class, 'index'])
