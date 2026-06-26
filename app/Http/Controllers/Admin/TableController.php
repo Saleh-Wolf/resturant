@@ -157,4 +157,47 @@ class TableController extends Controller
         compact('table')
     );
 }
+
+public function downloadQr(RestaurantTable $table)
+{
+    $url = route('public.table.menu', [
+        $table->table_number,
+        $table->qr_token,
+    ]);
+
+    $svg = QrCode::size(1000)->generate($url);
+
+    return response($svg)
+        ->header('Content-Type', 'image/svg+xml')
+        ->header(
+            'Content-Disposition',
+            'attachment; filename="table-' . $table->table_number . '-qr.svg"'
+        );
+}
+
+public function regenerateQr(RestaurantTable $table)
+{
+    $table->update([
+        'qr_token' => (string) Str::uuid(),
+    ]);
+
+    return redirect()
+        ->route('admin.tables.qr', $table)
+        ->with('success', 'QR code regenerated successfully');
+}
+
+public function bulkGenerateQr()
+{
+    RestaurantTable::whereNull('qr_token')
+        ->orWhere('qr_token', '')
+        ->get()
+        ->each(function ($table) {
+            $table->update([
+                'qr_token' => (string) Str::uuid(),
+            ]);
+        });
+
+    return back()
+        ->with('success', 'QR codes generated for tables successfully');
+}
 }

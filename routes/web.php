@@ -456,6 +456,18 @@ Route::get(
 Route::get('/table/{table_number}/{token}', [PublicMenuController::class, 'show'])
     ->name('public.table.menu');
 
+    Route::get('/admin/tables/{table}/qr/download', [TableController::class, 'downloadQr'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.tables.qr.download');
+
+Route::patch('/admin/tables/{table}/qr/regenerate', [TableController::class, 'regenerateQr'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.tables.qr.regenerate');
+
+Route::post('/admin/tables/qr/bulk-generate', [TableController::class, 'bulkGenerateQr'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.tables.qr.bulk-generate');
+
             // Subcategory Routes
     Route::get('/admin/subcategories', [SubcategoryController::class, 'index'])
     ->middleware(['auth', 'role:admin'])

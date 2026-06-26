@@ -24,12 +24,22 @@
     <div class="text-center mb-5">
 
         <h1 class="fw-bold">
-            Restaurant Menu
-        </h1>
+    Welcome to Table {{ $table->table_number }}
+</h1>
 
-        <p class="text-muted">
-            Table #{{ $table->table_number }}
-        </p>
+<p class="text-muted mb-1">
+    {{ ucfirst($table->type) }} Table
+</p>
+
+<p class="text-muted">
+    Browse our full menu below
+</p>
+
+<div class="alert alert-info mt-3">
+    <strong>Restaurant System</strong><br>
+    Phone: 01000000000<br>
+    Address: Main Branch
+</div>
 
     </div>
 
