@@ -255,57 +255,98 @@ class ReportController extends Controller
     }
 
     public function tableUtilization(Request $request)
-    {
-        $query = RestaurantTable::query();
+{
+    $query = RestaurantTable::with([
+        'orders.bill',
+    ]);
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        $query->withCount([
-            'reservations',
-
-            'orders' => function ($orderQuery) use ($request) {
-                if ($request->filled('from_date')) {
-                    $orderQuery->whereDate('created_at', '>=', $request->from_date);
-                }
-
-                if ($request->filled('to_date')) {
-                    $orderQuery->whereDate('created_at', '<=', $request->to_date);
-                }
-            },
-        ]);
-
-        $query->withSum([
-            'orders as revenue_generated' => function ($orderQuery) use ($request) {
-                if ($request->filled('from_date')) {
-                    $orderQuery->whereDate('created_at', '>=', $request->from_date);
-                }
-
-                if ($request->filled('to_date')) {
-                    $orderQuery->whereDate('created_at', '<=', $request->to_date);
-                }
-            },
-        ], 'total');
-
-        if ($request->input('sort') === 'revenue') {
-            $query->orderByDesc('revenue_generated');
-        } elseif ($request->input('sort') === 'orders') {
-            $query->orderByDesc('orders_count');
-        } else {
-            $query->orderBy('table_number');
-        }
-
-        $tables = $query
-            ->paginate(15)
-            ->withQueryString();
-
-        return view(
-            'admin.reports.table-utilization',
-            compact('tables')
-        );
+    if ($request->filled('type')) {
+        $query->where('type', $request->type);
     }
 
+    $tables = $query
+        ->get()
+        ->map(function ($table) use ($request) {
+
+            $orders = $table->orders;
+
+            if ($request->filled('from_date')) {
+                $orders = $orders->filter(function ($order) use ($request) {
+                    return $order->created_at->toDateString() >= $request->from_date;
+                });
+            }
+
+            if ($request->filled('to_date')) {
+                $orders = $orders->filter(function ($order) use ($request) {
+                    return $order->created_at->toDateString() <= $request->to_date;
+                });
+            }
+
+            $completedOrders = $orders->filter(function ($order) {
+                return $order->bill && $order->bill->paid_at;
+            });
+
+            $totalMinutesOccupied = $completedOrders->sum(function ($order) {
+                return $order->created_at->diffInMinutes($order->bill->paid_at);
+            });
+
+            $totalHoursOccupied = $totalMinutesOccupied / 60;
+
+            $averageDurationMinutes = $completedOrders->count() > 0
+                ? $totalMinutesOccupied / $completedOrders->count()
+                : 0;
+
+            $daysCount = 1;
+
+            if ($request->filled('from_date') && $request->filled('to_date')) {
+                $daysCount = \Carbon\Carbon::parse($request->from_date)
+                        ->diffInDays(\Carbon\Carbon::parse($request->to_date)) + 1;
+            }
+
+            $availableHours = $daysCount * 12;
+
+            $utilizationRate = $availableHours > 0
+                ? ($totalHoursOccupied / $availableHours) * 100
+                : 0;
+
+            $table->orders_count_filtered = $orders->count();
+            $table->revenue_generated_filtered = $orders->sum('total');
+            $table->total_hours_occupied = $totalHoursOccupied;
+            $table->average_duration_minutes = $averageDurationMinutes;
+            $table->utilization_rate = $utilizationRate;
+
+            return $table;
+        });
+
+    if ($request->input('sort') === 'revenue') {
+        $tables = $tables->sortByDesc('revenue_generated_filtered');
+    } elseif ($request->input('sort') === 'orders') {
+        $tables = $tables->sortByDesc('orders_count_filtered');
+    } elseif ($request->input('sort') === 'utilization') {
+        $tables = $tables->sortByDesc('utilization_rate');
+    } else {
+        $tables = $tables->sortBy('table_number');
+    }
+
+  $tables = $tables->values();
+
+$mostUsedTables = $tables
+    ->sortByDesc('orders_count_filtered')
+    ->take(5);
+
+$leastUsedTables = $tables
+    ->sortBy('orders_count_filtered')
+    ->take(5);
+
+return view(
+    'admin.reports.table-utilization',
+    compact(
+        'tables',
+        'mostUsedTables',
+        'leastUsedTables'
+    )
+);
+}
     public function monthlySales(Request $request)
     {
         $month = $request->input('month', now()->format('Y-m'));
