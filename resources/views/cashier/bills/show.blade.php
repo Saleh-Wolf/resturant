@@ -15,7 +15,7 @@
         <div class="card">
             <div class="card-body">
 
-                <h4 class="text-center">Restaurant System</h4>
+                <h4 class="text-center">Sofra</h4>
                 <p class="text-center mb-4">Receipt</p>
 
                 <p><strong>Bill #:</strong> {{ $bill->bill_number }}</p>

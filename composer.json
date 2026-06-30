@@ -1,9 +1,16 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
-    "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "name": "saleh-wolf/sofra",
+    "description": "Sofra - A modern restaurant management system built with Laravel 12.",
+    "keywords": [
+        "laravel",
+        "restaurant",
+        "restaurant-management",
+        "pos",
+        "billing",
+        "inventory",
+        "qr-code"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",

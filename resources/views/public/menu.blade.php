@@ -36,7 +36,7 @@
 </p>
 
 <div class="alert alert-info mt-3">
-    <strong>Restaurant System</strong><br>
+    <strong>Sofra Menu</strong><br>
     Phone: 01000000000<br>
     Address: Main Branch
 </div>

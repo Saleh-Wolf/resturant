@@ -2,7 +2,7 @@
 
     <a href="{{ route('dashboard') }}" class="brand-link">
         <span class="brand-text font-weight-light">
-            Restaurant System
+           Sofra
         </span>
     </a>
 

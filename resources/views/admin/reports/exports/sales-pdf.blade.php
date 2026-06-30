@@ -42,7 +42,7 @@
 </head>
 <body>
 
-    <h1>Restaurant System</h1>
+    <h1>Sofra</h1>
     <h3>Sales Report</h3>
 
     <div class="summary">

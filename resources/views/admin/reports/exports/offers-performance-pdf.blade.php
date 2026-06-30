@@ -34,7 +34,7 @@
 </head>
 <body>
 
-    <h1>Restaurant System</h1>
+    <h1>Sofra</h1>
     <h3>Offers Performance Report</h3>
 
     <p><strong>Generated At:</strong> {{ now()->format('Y-m-d H:i') }}</p>
